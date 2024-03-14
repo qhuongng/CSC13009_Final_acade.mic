@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="midnightGreen">#0F453D</color>
+    <color name="firebrick">#B22222</color>
+    <color name="gray">#ECECEC</color>
+    <color name="darkGray">#656565</color>
+    <color name="disabledDarkGray">#8F8F8F</color>
+
+    <color name="textColor">#282828</color>
+</resources>

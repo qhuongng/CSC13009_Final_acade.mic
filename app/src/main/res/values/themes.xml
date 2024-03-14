@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Academic" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/midnightGreen</item>
+        <item name="rippleColor">@color/disabledDarkGray</item>
+        <item name="android:textColor">@color/textColor</item>
+    </style>
+
+    <style name="Theme.Academic" parent="Base.Theme.Academic" />
+</resources>
