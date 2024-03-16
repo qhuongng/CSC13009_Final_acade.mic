@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,66 +8,78 @@
     android:background="#FFFFFF"
     android:backgroundTint="#FFFFFF"
     tools:context=".MainActivity">
-
-    <TextView
-        android:id="@+id/tvTimer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="00:00.00"
-        android:textColor="@color/textColor"
-        android:textSize="56sp"
-        app:layout_constraintBottom_toTopOf="@+id/waveformView"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginBottom="30dp"/>
-
-    <com.example.acade_mic.WaveformView
-
-        android:id="@+id/waveformView"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="400px"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/tvTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00.00"
+            android:textColor="@color/textColor"
+            android:textSize="56sp"
+            app:layout_constraintBottom_toTopOf="@+id/waveformView"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginBottom="30dp"/>
+
+        <com.example.acade_mic.WaveformView
+
+            android:id="@+id/waveformView"
+            android:layout_width="match_parent"
+            android:layout_height="400px"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
-    <LinearLayout
-        android:id="@+id/linearLayout2"
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="80dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnDel"
+                android:layout_width="@dimen/roundBtnDiameter"
+                android:layout_height="@dimen/roundBtnDiameter"
+                android:background="@drawable/ic_other_ripple"
+                android:src="@drawable/ic_cancel_disabled" />
+
+            <ImageButton
+                android:id="@+id/btnRec"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginHorizontal="35dp"
+                android:background="@drawable/ic_record_ripple"
+                android:src="@drawable/ic_rec" />
+
+            <ImageButton
+                android:id="@+id/btnRecList"
+                android:layout_width="@dimen/roundBtnDiameter"
+                android:layout_height="@dimen/roundBtnDiameter"
+                android:background="@drawable/ic_other_ripple"
+                android:src="@drawable/ic_recordings" />
+
+            <ImageButton
+                android:id="@+id/btnOk"
+                android:layout_width="@dimen/roundBtnDiameter"
+                android:layout_height="@dimen/roundBtnDiameter"
+                android:background="@drawable/ic_other_ripple"
+                android:src="@drawable/ic_ok"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="80dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_height="match_parent"
+        android:id="@+id/bottomSheet"
+        android:background="@color/opaqueBG"/>
 
-        <ImageButton
-            android:id="@+id/btnDel"
-            android:layout_width="@dimen/roundBtnDiameter"
-            android:layout_height="@dimen/roundBtnDiameter"
-            android:background="@drawable/ic_other_ripple"
-            android:src="@drawable/ic_cancel_disabled" />
-
-        <ImageButton
-            android:id="@+id/btnRec"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginHorizontal="35dp"
-            android:background="@drawable/ic_record_ripple"
-            android:src="@drawable/ic_rec" />
-
-        <ImageButton
-            android:id="@+id/btnRecList"
-            android:layout_width="@dimen/roundBtnDiameter"
-            android:layout_height="@dimen/roundBtnDiameter"
-            android:background="@drawable/ic_other_ripple"
-            android:src="@drawable/ic_recordings" />
-
-        <ImageButton
-            android:id="@+id/btnOk"
-            android:layout_width="@dimen/roundBtnDiameter"
-            android:layout_height="@dimen/roundBtnDiameter"
-            android:background="@drawable/ic_other_ripple"
-            android:src="@drawable/ic_ok"
-            android:visibility="gone" />
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <include layout="@layout/bottom_sheet"/>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

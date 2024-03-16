@@ -10,4 +10,6 @@
     <color name="disabledDarkGray">#8F8F8F</color>
 
     <color name="textColor">#282828</color>
+    <color name="strokeColor">#1E88E5</color>
+    <color name="opaqueBG">#61000000</color>
 </resources>
