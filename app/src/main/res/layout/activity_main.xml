@@ -78,7 +78,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/bottomSheet"
+        android:visibility="gone"
+        android:id="@+id/bottomSheetBG"
         android:background="@color/opaqueBG"/>
 
     <include layout="@layout/bottom_sheet"/>
