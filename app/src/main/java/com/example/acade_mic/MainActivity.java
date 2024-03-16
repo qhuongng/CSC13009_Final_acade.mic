@@ -3,6 +3,7 @@ package com.example.acade_mic;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -23,13 +24,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.room.Room;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
 
     private Timer timer;
+    private String duration;
+    private AppDatabase db = null;
     private TextView tvTimer;
     private WaveformView waveformView;
     private Vibrator vibrator;
@@ -69,6 +75,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO }, REQUEST_CODE);
         }
+
+        db = Room.databaseBuilder(
+                getApplicationContext(),
+                AppDatabase.class,
+                "audioRecords"
+        ).build();
+
         timer= new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -97,7 +110,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            Toast.makeText(this, "List btn", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "List btn", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, GalleryActivity.class);
+            startActivity(intent);
+
         });
 
         btnDel = (ImageButton)findViewById(R.id.btnDel);
@@ -146,9 +162,38 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private void save(){
         String newFileName = fileNameInput.getText().toString();
 
+        //dirPath = path
         if(newFileName != fileName){
-            // create new file here if the user change the file name
+            File newFile = new File(path + newFileName + ".mp3");
+            File oldFile = new File(path + fileName + ".mp3");
+            oldFile.renameTo(newFile);
+
         }
+
+        String filePath = path + newFileName + ".mp3";
+        long timestamp = new Date().getTime();
+        String ampsPath = path + newFileName;
+
+        try {
+            FileOutputStream fos = new FileOutputStream(ampsPath);
+            ObjectOutputStream out = new ObjectOutputStream(fos);
+            out.writeObject(amplitudes);
+            fos.close();
+            out.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                db.audioRecordDao().insert(record);
+            }
+        }).start();
+
+
     }
 
     private void dismiss(){
@@ -256,6 +301,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     @Override
     public void onTimerTick(String duration) {
         tvTimer.setText(duration);
+        this.duration = duration.substring(0, duration.length() - 3);
         waveformView.addAmplitude((float) recorder.getMaxAmplitude());
     }
 }
