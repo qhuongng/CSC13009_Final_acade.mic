@@ -13,14 +13,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00:00.00"
-        android:textSize="56sp"
         android:textColor="@color/textColor"
+        android:textSize="56sp"
+        app:layout_constraintBottom_toTopOf="@+id/waveformView"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginBottom="30dp"/>
+
+    <com.example.acade_mic.WaveformView
+
+        android:id="@+id/waveformView"
+        android:layout_width="match_parent"
+        android:layout_height="400px"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
     <LinearLayout
+        android:id="@+id/linearLayout2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="80dp"
@@ -39,8 +49,8 @@
             android:id="@+id/btnRec"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:background="@drawable/ic_record_ripple"
             android:layout_marginHorizontal="35dp"
+            android:background="@drawable/ic_record_ripple"
             android:src="@drawable/ic_rec" />
 
         <ImageButton
@@ -52,11 +62,11 @@
 
         <ImageButton
             android:id="@+id/btnOk"
-            android:visibility="gone"
             android:layout_width="@dimen/roundBtnDiameter"
             android:layout_height="@dimen/roundBtnDiameter"
             android:background="@drawable/ic_other_ripple"
-            android:src="@drawable/ic_ok" />
+            android:src="@drawable/ic_ok"
+            android:visibility="gone" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
