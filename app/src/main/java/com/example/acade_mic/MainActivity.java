@@ -10,14 +10,17 @@ import android.os.Vibrator;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -28,8 +31,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private String path = "";
     private String fileName = "";
     private ImageButton btnRec;
+    private ImageButton btnDel;
+    private ImageButton btnOk;
+    private ImageButton btnRecList;
     private boolean isRecording = false;
     private boolean isPaused = false;
+    private ArrayList<Float> amplitudes;
 
     private Timer timer;
     private TextView tvTimer;
@@ -66,6 +73,26 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
             }
         });
+
+        btnRecList = findViewById(R.id.btnRecList);
+        btnRecList.setOnClickListener((View v) -> {
+            Toast.makeText(this, "List btn", Toast.LENGTH_SHORT).show();
+        });
+
+        btnDel = (ImageButton)findViewById(R.id.btnDel);
+        btnDel.setOnClickListener((View v) ->{
+            stopRec();
+
+            Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
+        });
+
+        btnOk = (ImageButton)findViewById(R.id.btnOk);
+        btnOk.setOnClickListener((View v) -> {
+            stopRec();
+            Toast.makeText(this, "Record saved", Toast.LENGTH_SHORT).show();
+        });
+
+        btnDel.setClickable(false);
     }
 
     @Override
@@ -112,6 +139,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         // change the button
         btnRec.setImageResource(R.drawable.ic_pause);
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
+
+        btnDel.setClickable(true);
+        btnDel.setImageResource(R.drawable.ic_delete);
+
+        btnRecList.setVisibility(View.GONE);
+        btnOk.setVisibility(View.VISIBLE);
     }
 
     private void resumeRec() {
@@ -134,11 +167,25 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
     private void stopRec(){
         timer.stop();
+
+        recorder.stop();
+        recorder.release();
+        isPaused = false;
+        isRecording = false;
+
+        btnRecList.setVisibility(View.VISIBLE);
+        btnOk.setVisibility(View.GONE);
+
+        btnDel.setClickable(false);
+        btnDel.setImageResource(R.drawable.ic_delete);
+
+        btnRec.setImageResource(R.drawable.ic_rec);
+        tvTimer.setText("00:00:00");
+        amplitudes = waveformView.clear();
     }
     @Override
     public void onTimerTick(String duration) {
         tvTimer.setText(duration);
         waveformView.addAmplitude((float) recorder.getMaxAmplitude());
     }
-
 }
