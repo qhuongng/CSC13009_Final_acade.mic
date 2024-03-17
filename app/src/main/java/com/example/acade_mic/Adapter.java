@@ -16,12 +16,14 @@ import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private ArrayList<AudioRecord> records;
+    private OnItemClickListener listener;
 
-    public Adapter(ArrayList<AudioRecord> records) {
+    public Adapter(ArrayList<AudioRecord> records,OnItemClickListener listener) {
         this.records = records;
+        this.listener = listener;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView tvFilename;
         TextView tvMeta;
         CheckBox checkbox;
@@ -31,6 +33,25 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             tvFilename = itemView.findViewById(R.id.tvFilename);
             tvMeta = itemView.findViewById(R.id.tvMeta);
             checkbox = itemView.findViewById(R.id.checkbox);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            int position = getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemClickListener(position);
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            int position = getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemLongClickListener(position);
+            }
+            return true;
         }
     }
 

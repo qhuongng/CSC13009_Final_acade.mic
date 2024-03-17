@@ -163,11 +163,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         String newFileName = fileNameInput.getText().toString();
 
         //dirPath = path
-        if(newFileName != fileName){
+        if(!newFileName.equals(fileName)){
             File newFile = new File(path + newFileName + ".mp3");
             File oldFile = new File(path + fileName + ".mp3");
             oldFile.renameTo(newFile);
-
         }
 
         String filePath = path + newFileName + ".mp3";
@@ -230,15 +229,15 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
-        if (getExternalCacheDir() != null) {
-            path = getExternalCacheDir().getAbsolutePath() + "/";
+        if (getExternalFilesDir(null) != null) {
+            path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
-        fileName = path + "recording_" + date + ".mp3";
+        fileName = "recording_" + date + ".mp3";
 
-        recorder.setOutputFile(fileName);
+        recorder.setOutputFile(path + fileName);
 
         try {
             recorder.prepare();

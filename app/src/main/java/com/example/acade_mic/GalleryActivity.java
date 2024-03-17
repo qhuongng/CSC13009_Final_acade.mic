@@ -5,15 +5,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import kotlinx.coroutines.GlobalScope;
 
-public class GalleryActivity extends AppCompatActivity {
+public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
 
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
@@ -31,7 +33,7 @@ public class GalleryActivity extends AppCompatActivity {
                 "audioRecords"
         ).build();
 
-        mAdapter = new Adapter(records);
+        mAdapter = new Adapter(records, this);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setAdapter(mAdapter);
@@ -56,5 +58,19 @@ public class GalleryActivity extends AppCompatActivity {
                 });
             }
         }).start();
+    }
+
+    @Override
+    public void onItemClickListener(int position) {
+        AudioRecord audioRecord = records.get(position);
+        Intent intent = new Intent(this, AudioPlayerActivity.class);
+        intent.putExtra("filepath",audioRecord.getFilePath());
+        intent.putExtra("filename", audioRecord.getFilename());
+        startActivity(intent);
+    }
+
+    @Override
+    public void onItemLongClickListener(int position) {
+        Toast.makeText(this,"Long click",Toast.LENGTH_SHORT).show();
     }
 }
