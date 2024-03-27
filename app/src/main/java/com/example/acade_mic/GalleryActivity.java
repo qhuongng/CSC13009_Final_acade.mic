@@ -10,6 +10,10 @@ import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,11 +66,34 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
     @Override
     public void onItemClickListener(int position) {
-        AudioRecord audioRecord = records.get(position);
-        Intent intent = new Intent(this, AudioPlayerActivity.class);
-        intent.putExtra("filepath",audioRecord.getFilePath());
-        intent.putExtra("filename", audioRecord.getFilename());
-        startActivity(intent);
+        try{
+            AudioRecord audioRecord = records.get(position);
+            File cacheFile = new File(getCacheDir(), audioRecord.getFilename());
+            Intent intent = new Intent(this, AudioPlayerActivity.class);
+            intent.putExtra("filepath", cacheFile.getAbsolutePath() );
+            intent.putExtra("filename", audioRecord.getFilename());
+            startActivity(intent);
+        }catch(Exception exception){
+            System.out.println(exception.fillInStackTrace());
+        }
+    }
+
+    private byte[] readAudioFileFromCache() {
+        byte[] audioData = null;
+        try {
+            // Example cache file path
+            File cacheFile = new File(getCacheDir(), "example_audio.mp3");
+
+            FileInputStream inputStream = new FileInputStream(cacheFile);
+            audioData = new byte[(int) cacheFile.length()];
+            inputStream.read(audioData);
+            inputStream.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return audioData;
     }
 
     @Override

@@ -40,11 +40,6 @@ public class AudioPlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_audio_player);
         mediaPlayer = new MediaPlayer();
 
-        permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) == PackageManager.PERMISSION_GRANTED;
-
-        if (!permissionGranted) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.READ_MEDIA_AUDIO }, REQUEST_CODE);
-        }
 
         String filePath = getIntent().getStringExtra("filepath");
         String fileName = getIntent().getStringExtra("filename");
@@ -57,24 +52,12 @@ public class AudioPlayerActivity extends AppCompatActivity {
 
         FileInputStream fileInputStream;
         try {
-            fileInputStream = new FileInputStream("/storage/emulated/0/Android/data/com.example.acade_mic/cache/recording_2024-03-17_12:21:04.mp3");
-            if(fileInputStream != null){
-                try {
-                    mediaPlayer.setDataSource(getExternalFilesDir(null).getAbsolutePath() + "/" + fileName);
-                    mediaPlayer.prepare();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                Toast.makeText(this,"lỗi rồi má",Toast.LENGTH_LONG).show();
-            }
+                mediaPlayer.setDataSource(filePath);
+                mediaPlayer.prepare();
         } catch (FileNotFoundException e) {
-
             throw new RuntimeException(e);
+        } catch (IOException e) {            throw new RuntimeException(e);
         }
-
-
-
 
 
         btnPlay.setOnClickListener(new View.OnClickListener() {
