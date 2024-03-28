@@ -59,6 +59,7 @@ public class AudioPlayerActivity extends AppCompatActivity {
             fis = new FileInputStream(filePath);
             mediaPlayer.setDataSource(fis.getFD());
             mediaPlayer.prepare();
+            mediaPlayer.start();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {
