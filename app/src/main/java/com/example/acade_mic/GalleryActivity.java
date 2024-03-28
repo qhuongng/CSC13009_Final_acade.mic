@@ -8,6 +8,7 @@ import androidx.room.Room;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -20,10 +21,10 @@ import java.util.List;
 import kotlinx.coroutines.GlobalScope;
 
 public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
-
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
     private AppDatabase db;
+    TextView tv;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +39,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         ).build();
 
         mAdapter = new Adapter(records, this);
+
+        tv = (TextView) findViewById(R.id.textView);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setAdapter(mAdapter);
@@ -68,9 +71,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     public void onItemClickListener(int position) {
         try{
             AudioRecord audioRecord = records.get(position);
-            File cacheFile = new File(getCacheDir(), audioRecord.getFilename());
+            // File cacheFile = new File(getExternalFilesDir(null).getAbsolutePath(), audioRecord.getFilename());
+            tv.setText(getExternalFilesDir(null).getAbsolutePath() + "/" + audioRecord.getFilename());
             Intent intent = new Intent(this, AudioPlayerActivity.class);
-            intent.putExtra("filepath", cacheFile.getAbsolutePath() );
+            intent.putExtra("filepath", audioRecord.getFilePath());
             intent.putExtra("filename", audioRecord.getFilename());
             startActivity(intent);
         }catch(Exception exception){

@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            //Toast.makeText(this, "List btn", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, GalleryActivity.class);
             startActivity(intent);
 
@@ -169,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             oldFile.renameTo(newFile);
         }
 
-        String filePath = path + newFileName + ".mp3";
+        String filePath = path + newFileName;
         long timestamp = new Date().getTime();
         String ampsPath = path + newFileName;
 

@@ -18,6 +18,7 @@ import android.widget.Toast;
 
 import com.google.android.material.chip.Chip;
 
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -43,6 +44,7 @@ public class AudioPlayerActivity extends AppCompatActivity {
 
         String filePath = getIntent().getStringExtra("filepath");
         String fileName = getIntent().getStringExtra("filename");
+        Toast.makeText(this, filePath, Toast.LENGTH_LONG).show();
 
         btnBackward = findViewById(R.id.btnBackward);
         btnForward = findViewById(R.id.btnForward);
@@ -50,13 +52,17 @@ public class AudioPlayerActivity extends AppCompatActivity {
         speedChip = findViewById(R.id.chip);
         seekBar = findViewById(R.id.seekBar);
 
-        FileInputStream fileInputStream;
+        FileDescriptor descriptor = null;
+        FileInputStream fis;
+
         try {
-                mediaPlayer.setDataSource(filePath);
-                mediaPlayer.prepare();
+            fis = new FileInputStream(filePath);
+            mediaPlayer.setDataSource(fis.getFD());
+            mediaPlayer.prepare();
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
-        } catch (IOException e) {            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
 
