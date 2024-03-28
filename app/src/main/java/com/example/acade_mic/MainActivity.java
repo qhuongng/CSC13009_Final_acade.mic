@@ -31,6 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -161,26 +162,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private void save(){
         String newFileName = fileNameInput.getText().toString();
 
-        //dirPath = path
-        if(!newFileName.equals(fileName)){
-            File newFile = new File(path + newFileName + ".mp3");
-            File oldFile = new File(path + fileName + ".mp3");
-            oldFile.renameTo(newFile);
-        }
-
         String filePath = path + newFileName;
         long timestamp = new Date().getTime();
         String ampsPath = path + newFileName;
-
-        try {
-            FileOutputStream fos = new FileOutputStream(ampsPath);
-            ObjectOutputStream out = new ObjectOutputStream(fos);
-            out.writeObject(amplitudes);
-            fos.close();
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
 
@@ -236,7 +220,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
 
-        recorder.setOutputFile(path + fileName);
+        try {
+            recorder.setOutputFile(new FileOutputStream(path + fileName).getFD());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             recorder.prepare();
@@ -283,6 +273,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         recorder.stop();
         recorder.release();
+        recorder = null;
         isPaused = false;
         isRecording = false;
 
