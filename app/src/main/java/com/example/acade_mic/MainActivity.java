@@ -258,7 +258,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
 
         btnDel.setClickable(true);
-        btnDel.setImageResource(R.drawable.ic_delete);
 
         btnRecList.setVisibility(View.GONE);
         btnOk.setVisibility(View.VISIBLE);
@@ -295,7 +294,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk.setVisibility(View.GONE);
 
         btnDel.setClickable(false);
-        btnDel.setImageResource(R.drawable.ic_delete);
 
         btnRec.setImageResource(R.drawable.ic_rec);
         tvTimer.setText("00:00:00");
