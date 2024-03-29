@@ -125,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk = (ImageButton)findViewById(R.id.btnOk);
         btnOk.setOnClickListener((View v) -> {
             stopRec();
-            Toast.makeText(this, "Record saved", Toast.LENGTH_SHORT).show();
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
             bottomSheetBG.setVisibility(View.VISIBLE);
             fileNameInput.setText(fileName);
@@ -162,18 +161,33 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private void save(){
         String newFileName = fileNameInput.getText().toString();
 
-        String filePath = path + newFileName;
-        long timestamp = new Date().getTime();
-        String ampsPath = path + newFileName;
-
-        AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                db.audioRecordDao().insert(record);
+        File oldFile = new File(path + fileName);
+        if(oldFile.exists()){
+            String newFilePath = path + newFileName;
+            long timestamp = new Date().getTime();
+            File newFile = new File(newFilePath);
+            if(oldFile.renameTo(newFile)){
+                AudioRecord record = new AudioRecord(newFileName, newFilePath, timestamp, duration, newFilePath);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.audioRecordDao().insert(record);
+                    }
+                }).start();
             }
-        }).start();
+        }
+//        String filePath = path + newFileName;
+//        long timestamp = new Date().getTime();
+//        String ampsPath = path + newFileName;
+
+//        AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                db.audioRecordDao().insert(record);
+//            }
+//        }).start();
 
 
     }
