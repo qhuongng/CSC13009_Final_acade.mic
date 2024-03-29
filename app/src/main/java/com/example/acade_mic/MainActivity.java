@@ -176,20 +176,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 }).start();
             }
         }
-//        String filePath = path + newFileName;
-//        long timestamp = new Date().getTime();
-//        String ampsPath = path + newFileName;
-
-//        AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                db.audioRecordDao().insert(record);
-//            }
-//        }).start();
-
-
     }
 
     private void dismiss(){

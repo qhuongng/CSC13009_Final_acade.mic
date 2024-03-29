@@ -17,10 +17,20 @@ import java.util.List;
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private ArrayList<AudioRecord> records;
     private OnItemClickListener listener;
+    private boolean editMode = false;
 
     public Adapter(ArrayList<AudioRecord> records,OnItemClickListener listener) {
         this.records = records;
         this.listener = listener;
+    }
+
+    public boolean isEditMode() {return editMode;}
+    public void setEditMode(boolean mode){
+        if(editMode != mode){
+            editMode = mode;
+            notifyDataSetChanged();
+
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
@@ -72,6 +82,14 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
             holder.tvFilename.setText(record.getFilename());
             holder.tvMeta.setText(record.getDuration() + " " + strDate);
+
+            if(editMode){
+                holder.checkbox.setVisibility(View.VISIBLE);
+                holder.checkbox.setChecked(record.isChecked());
+            } else {
+                holder.checkbox.setVisibility(View.GONE);
+                holder.checkbox.setChecked(false);
+            }
         }
     }
 
