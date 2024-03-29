@@ -24,7 +24,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
     private AppDatabase db;
-    TextView tv;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +39,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
         mAdapter = new Adapter(records, this);
 
-        tv = (TextView) findViewById(R.id.textView);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setAdapter(mAdapter);
@@ -72,7 +70,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         try{
             AudioRecord audioRecord = records.get(position);
             // File cacheFile = new File(getExternalFilesDir(null).getAbsolutePath(), audioRecord.getFilename());
-            tv.setText(getExternalFilesDir(null).getAbsolutePath() + "/" + audioRecord.getFilename());
             Intent intent = new Intent(this, AudioPlayerActivity.class);
             intent.putExtra("filepath", audioRecord.getFilePath());
             intent.putExtra("filename", audioRecord.getFilename());
@@ -80,24 +77,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         }catch(Exception exception){
             System.out.println(exception.fillInStackTrace());
         }
-    }
-
-    private byte[] readAudioFileFromCache() {
-        byte[] audioData = null;
-        try {
-            // Example cache file path
-            File cacheFile = new File(getCacheDir(), "example_audio.mp3");
-
-            FileInputStream inputStream = new FileInputStream(cacheFile);
-            audioData = new byte[(int) cacheFile.length()];
-            inputStream.read(audioData);
-            inputStream.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return audioData;
     }
 
     @Override
