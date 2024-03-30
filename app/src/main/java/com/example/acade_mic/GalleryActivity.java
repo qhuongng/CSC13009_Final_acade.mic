@@ -166,7 +166,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 toDelete.add(record);
                             }
                         }
-
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -210,21 +209,20 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     }
 
     private void leaveEditMode() {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
         }
-
         editbar.setVisibility(View.GONE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-        for (AudioRecord record : records) {
-            record.setChecked(false);
+        for (AudioRecord rc : records ) {
+            rc.setChecked(false);
         }
-
         mAdapter.setEditMode(false);
     }
+
+
 
     private void disableRename() {
         btnRename.setClickable(false);
