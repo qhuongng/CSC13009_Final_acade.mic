@@ -18,6 +18,7 @@ import android.widget.Toast;
 import android.widget.Toolbar;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -34,6 +35,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private Adapter mAdapter;
     private AppDatabase db;
     private TextInputEditText searchInput;
+    private LinearLayout bottomSheet;
+    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
     private MaterialToolbar toolbar;
     private View editbar;
     private ImageButton btnClose;
@@ -64,6 +67,9 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnClose = findViewById(R.id.btnClose);
         btnSelectAll = findViewById(R.id.btnSelectAll);
 
+        bottomSheet = findViewById(R.id.bottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         records = new ArrayList<>();
 
@@ -106,6 +112,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     actionBar.setDisplayShowHomeEnabled(true);
                 }
                 editbar.setVisibility(View.GONE);
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                 for (AudioRecord rc : records ) {
                     rc.setChecked(false);
                 }
@@ -185,6 +192,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         records.get(position).setChecked(!records.get(position).isChecked());
         mAdapter.notifyItemChanged(position);
 
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
         if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
             ActionBar actionBar = getSupportActionBar();
             if(actionBar != null){
