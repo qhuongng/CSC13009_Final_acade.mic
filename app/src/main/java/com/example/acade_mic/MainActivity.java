@@ -2,10 +2,14 @@ package com.example.acade_mic;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,12 +21,15 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
@@ -42,6 +49,9 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener {
     private final int REQUEST_CODE = 200;
+    private final int NOTI_REQUEST_CODE = 100;
+    private static final String CHANNEL_ID = "my_channel_id";
+    private static final int NOTIFICATION_ID = 1;
     private boolean permissionGranted;
     private MediaRecorder recorder;
     private String path = "";
@@ -66,15 +76,16 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private TextInputEditText fileNameInput;
     private MaterialButton btnCancel;
     private MaterialButton btnSave;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        createNotificationChannel(this);
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO }, REQUEST_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
         }
 
         db = Room.databaseBuilder(
@@ -83,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 "audioRecords"
         ).build();
 
-        timer= new Timer(this);
+        timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         tvTimer = findViewById(R.id.tvTimer);
@@ -98,11 +109,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             public void onClick(View v) {
                 if (isPaused) {
                     resumeRec();
-                }
-                else if (isRecording) {
+                } else if (isRecording) {
                     pauseRec();
-                }
-                else {
+                } else {
                     startRec();
                 }
                 vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -116,13 +125,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         });
 
-        btnDel = (ImageButton)findViewById(R.id.btnDel);
-        btnDel.setOnClickListener((View v) ->{
+        btnDel = (ImageButton) findViewById(R.id.btnDel);
+        btnDel.setOnClickListener((View v) -> {
             stopRec();
             Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
         });
 
-        btnOk = (ImageButton)findViewById(R.id.btnOk);
+        btnOk = (ImageButton) findViewById(R.id.btnOk);
         btnOk.setOnClickListener((View v) -> {
             stopRec();
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
@@ -145,12 +154,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
-        btnSave.setOnClickListener((View v)->{
+        btnSave.setOnClickListener((View v) -> {
             dismiss();
             save();
         });
 
-        bottomSheetBG.setOnClickListener((View v)->{
+        bottomSheetBG.setOnClickListener((View v) -> {
             // delete file
             //
             dismiss();
@@ -158,15 +167,15 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
     }
 
-    private void save(){
+    private void save() {
         String newFileName = fileNameInput.getText().toString();
 
         File oldFile = new File(path + fileName);
-        if(oldFile.exists()){
+        if (oldFile.exists()) {
             String newFilePath = path + newFileName;
             long timestamp = new Date().getTime();
             File newFile = new File(newFilePath);
-            if(oldFile.renameTo(newFile)){
+            if (oldFile.renameTo(newFile)) {
                 AudioRecord record = new AudioRecord(newFileName, newFilePath, timestamp, duration, newFilePath);
                 new Thread(new Runnable() {
                     @Override
@@ -178,16 +187,16 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }
     }
 
-    private void dismiss(){
+    private void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(fileNameInput);
 
-        new Handler(Looper.getMainLooper()).postDelayed(()->{
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         }, 500);
     }
 
-    private void hideKeyBoard(View v){
+    private void hideKeyBoard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
@@ -203,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
     private void startRec() {
         if (!permissionGranted) {
-            ActivityCompat.requestPermissions(this, new String[] { Manifest.permission.RECORD_AUDIO }, REQUEST_CODE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
         }
 
@@ -233,7 +242,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        System.out.println("NOTI HEREEEEEEEEEEEEEEEE");
+        showNotification(this, "Acade.mic", "Audio started recording");
         recorder.start();
         isRecording = true;
         isPaused = false;
@@ -267,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
     }
 
-    private void stopRec(){
+    private void stopRec() {
         timer.stop();
 
         recorder.stop();
@@ -285,8 +295,79 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         tvTimer.setText("00:00:00");
         amplitudes = waveformView.clear();
     }
+
+
+    public static void createNotificationChannel(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "My Channel";
+            String description = "This is my channel";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    public void showNotification(Context context, String title, String content) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_pause)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setSound(null)
+                .setSilent(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
+                .setOngoing(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
+            return;
+        }
+
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT| PendingIntent.FLAG_IMMUTABLE);
+        builder.setContentIntent(pi);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(0, builder.build());
+    }
+
+    public void updateNotification(Context context, String updatedContent) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_pause)
+                .setContentTitle("Acade.mic")
+                .setSound(null)
+                .setSilent(true)
+                .setContentText(updatedContent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
+                .setOngoing(true);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
+            return;
+        }
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setAction("PLAY_PAUSE_ACTION");
+        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        builder.setContentIntent(pi);
+
+        Intent buttonIntent = new Intent(context, MainActivity.class);
+        PendingIntent buttonPendingIntent = PendingIntent.getActivity(context, 0, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        builder.addAction(R.drawable.ic_play, "Play", buttonPendingIntent);
+
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+
     @Override
     public void onTimerTick(String duration) {
+        updateNotification(this, duration);
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
         waveformView.addAmplitude((float) recorder.getMaxAmplitude());
