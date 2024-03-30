@@ -31,6 +31,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -110,7 +111,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            //Toast.makeText(this, "List btn", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, GalleryActivity.class);
             startActivity(intent);
 
@@ -125,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk = (ImageButton)findViewById(R.id.btnOk);
         btnOk.setOnClickListener((View v) -> {
             stopRec();
-            Toast.makeText(this, "Record saved", Toast.LENGTH_SHORT).show();
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
             bottomSheetBG.setVisibility(View.VISIBLE);
             fileNameInput.setText(fileName);
@@ -162,38 +161,21 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private void save(){
         String newFileName = fileNameInput.getText().toString();
 
-        //dirPath = path
-        if(newFileName != fileName){
-            File newFile = new File(path + newFileName + ".mp3");
-            File oldFile = new File(path + fileName + ".mp3");
-            oldFile.renameTo(newFile);
-
-        }
-
-        String filePath = path + newFileName + ".mp3";
-        long timestamp = new Date().getTime();
-        String ampsPath = path + newFileName;
-
-        try {
-            FileOutputStream fos = new FileOutputStream(ampsPath);
-            ObjectOutputStream out = new ObjectOutputStream(fos);
-            out.writeObject(amplitudes);
-            fos.close();
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, ampsPath);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                db.audioRecordDao().insert(record);
+        File oldFile = new File(path + fileName);
+        if(oldFile.exists()){
+            String newFilePath = path + newFileName;
+            long timestamp = new Date().getTime();
+            File newFile = new File(newFilePath);
+            if(oldFile.renameTo(newFile)){
+                AudioRecord record = new AudioRecord(newFileName, newFilePath, timestamp, duration, newFilePath);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.audioRecordDao().insert(record);
+                    }
+                }).start();
             }
-        }).start();
-
-
+        }
     }
 
     private void dismiss(){
@@ -230,15 +212,21 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
-        if (getExternalCacheDir() != null) {
-            path = getExternalCacheDir().getAbsolutePath() + "/";
+        if (getExternalFilesDir(null) != null) {
+            path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
-        fileName = path + "recording_" + date + ".mp3";
+        fileName = "recording_" + date + ".mp3";
 
-        recorder.setOutputFile(fileName);
+        try {
+            recorder.setOutputFile(new FileOutputStream(path + fileName).getFD());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         try {
             recorder.prepare();
@@ -256,7 +244,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
 
         btnDel.setClickable(true);
-        btnDel.setImageResource(R.drawable.ic_delete);
 
         btnRecList.setVisibility(View.GONE);
         btnOk.setVisibility(View.VISIBLE);
@@ -285,6 +272,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         recorder.stop();
         recorder.release();
+        recorder = null;
         isPaused = false;
         isRecording = false;
 
@@ -292,7 +280,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk.setVisibility(View.GONE);
 
         btnDel.setClickable(false);
-        btnDel.setImageResource(R.drawable.ic_delete);
 
         btnRec.setImageResource(R.drawable.ic_rec);
         tvTimer.setText("00:00:00");

@@ -16,12 +16,24 @@ import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private ArrayList<AudioRecord> records;
+    private OnItemClickListener listener;
+    private boolean editMode = false;
 
-    public Adapter(ArrayList<AudioRecord> records) {
+    public Adapter(ArrayList<AudioRecord> records,OnItemClickListener listener) {
         this.records = records;
+        this.listener = listener;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public boolean isEditMode() {return editMode;}
+    public void setEditMode(boolean mode){
+        if(editMode != mode){
+            editMode = mode;
+            notifyDataSetChanged();
+
+        }
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         TextView tvFilename;
         TextView tvMeta;
         CheckBox checkbox;
@@ -31,6 +43,25 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
             tvFilename = itemView.findViewById(R.id.tvFilename);
             tvMeta = itemView.findViewById(R.id.tvMeta);
             checkbox = itemView.findViewById(R.id.checkbox);
+            itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            int position = getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemClickListener(position);
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            int position = getAdapterPosition();
+            if(position != RecyclerView.NO_POSITION){
+                listener.onItemLongClickListener(position);
+            }
+            return true;
         }
     }
 
@@ -51,6 +82,14 @@ public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
 
             holder.tvFilename.setText(record.getFilename());
             holder.tvMeta.setText(record.getDuration() + " " + strDate);
+
+            if(editMode){
+                holder.checkbox.setVisibility(View.VISIBLE);
+                holder.checkbox.setChecked(record.isChecked());
+            } else {
+                holder.checkbox.setVisibility(View.GONE);
+                holder.checkbox.setChecked(false);
+            }
         }
     }
 
