@@ -29,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import kotlinx.coroutines.GlobalScope;
@@ -205,7 +206,87 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             }
         });
 
+        btnRename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
 
+                View dialogView = getLayoutInflater().inflate(R.layout.rename_layout, null);
+                builder.setView(dialogView);
+                AlertDialog dialog = builder.create();
+
+                AudioRecord record = null;
+                for (AudioRecord r : records) {
+                    if (r.isChecked()) {
+                        record = r;
+                        break;
+                    }
+                }
+                if (record != null) {
+                    TextInputEditText textInput = dialogView.findViewById(R.id.filenameInput);
+                    textInput.setText(record.getFilename());
+                    AudioRecord finalRecord = record;
+                    dialogView.findViewById(R.id.btnSaveRename).setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String newFileName  = textInput.getText().toString();
+                            if (newFileName .isEmpty()) {
+                                Toast.makeText(GalleryActivity.this, "A name is required", Toast.LENGTH_LONG).show();
+                            } else {
+//                                String oldFileName = finalRecord.getFilename();
+//                                if (!newFileName.equals(oldFileName)) {
+//                                    File oldFile = new File(finalRecord.getFilePath());
+//                                    if (oldFile.exists()) {
+//                                        String newFilePath = oldFile.getParent() + File.separator + newFileName;
+//                                        File newFile = new File(newFilePath);
+//                                        if (oldFile.renameTo(newFile)) {
+//                                            AudioRecord newRecord = new AudioRecord(newFileName, newFilePath, finalRecord.getTimestamp(), finalRecord.getDuration(), newFilePath);
+//                                            new Thread(new Runnable() {
+//                                                @Override
+//                                                public void run() {
+//                                                    db.audioRecordDao().update(newRecord);
+//                                                    dialog.dismiss();
+//                                                    leaveEditMode();
+//                                                }
+//                                            }).start();
+//                                            Toast.makeText(GalleryActivity.this, "File renamed successfully", Toast.LENGTH_SHORT).show();
+//                                        } else {
+//                                            Toast.makeText(GalleryActivity.this, "Failed to rename file", Toast.LENGTH_SHORT).show();
+//                                        }
+//                                    }
+//                                } else {
+//                                    Toast.makeText(GalleryActivity.this, "New name must be different", Toast.LENGTH_SHORT).show();
+//                                }
+                                finalRecord.setFilename(newFileName);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.audioRecordDao().update(finalRecord);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                mAdapter.notifyItemChanged(records.indexOf(finalRecord));
+                                                dialog.dismiss();
+                                                leaveEditMode();
+                                            }
+                                        });
+                                    }
+                                }).start();
+                            }
+                        }
+                    });
+                }
+
+                dialogView.findViewById(R.id.btnCancel).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        dialog.dismiss();
+                    }
+                });
+
+                dialog.show();
+            }
+        });
 
     }
 
