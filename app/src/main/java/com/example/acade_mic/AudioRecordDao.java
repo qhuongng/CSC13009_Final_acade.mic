@@ -14,6 +14,8 @@ public interface AudioRecordDao {
     @Query("SELECT * FROM audioRecords")
     List<AudioRecord> getAll();
 
+    @Query("SELECT * FROM audioRecords where filename like :query")
+    List<AudioRecord> searchDatabase(String query);
     // "..."  indicates that the method can accept zero or more AudioRecord objects as arguments.
     @Insert
     void insert(AudioRecord...audioRecords);

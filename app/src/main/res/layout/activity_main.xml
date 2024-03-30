@@ -25,13 +25,11 @@
             android:layout_marginBottom="30dp"/>
 
         <com.example.acade_mic.WaveformView
-
             android:id="@+id/waveformView"
             android:layout_width="match_parent"
             android:layout_height="400px"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
 
         <LinearLayout
             android:id="@+id/linearLayout2"
