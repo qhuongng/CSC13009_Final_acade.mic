@@ -8,12 +8,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -118,17 +120,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ActionBar actionBar = getSupportActionBar();
-                if(actionBar != null){
-                    actionBar.setDisplayHomeAsUpEnabled(true);
-                    actionBar.setDisplayShowHomeEnabled(true);
-                }
-                editbar.setVisibility(View.GONE);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                for (AudioRecord rc : records ) {
-                    rc.setChecked(false);
-                }
-                mAdapter.setEditMode(false);
+                leaveEditMode();
             }
         });
         btnSelectAll.setOnClickListener(new View.OnClickListener() {
@@ -165,6 +157,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         for (AudioRecord record : records) {
                             if (record.isChecked()) {
                                 toDelete.add(record);
+                                File delFile = new File(record.getFilePath());
+                                if(delFile != null)  delFile.delete();
                             }
                         }
 
@@ -182,6 +176,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 });
                             }
                         }).start();
+                        Toast.makeText(GalleryActivity.this, "Delete File successfully", Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -229,49 +224,44 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     dialogView.findViewById(R.id.btnSaveRename).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                            hideKeyBoard(dialogView);
                             String newFileName  = textInput.getText().toString();
                             if (newFileName .isEmpty()) {
                                 Toast.makeText(GalleryActivity.this, "A name is required", Toast.LENGTH_LONG).show();
                             } else {
-//                                String oldFileName = finalRecord.getFilename();
-//                                if (!newFileName.equals(oldFileName)) {
-//                                    File oldFile = new File(finalRecord.getFilePath());
-//                                    if (oldFile.exists()) {
-//                                        String newFilePath = oldFile.getParent() + File.separator + newFileName;
-//                                        File newFile = new File(newFilePath);
-//                                        if (oldFile.renameTo(newFile)) {
-//                                            AudioRecord newRecord = new AudioRecord(newFileName, newFilePath, finalRecord.getTimestamp(), finalRecord.getDuration(), newFilePath);
-//                                            new Thread(new Runnable() {
-//                                                @Override
-//                                                public void run() {
-//                                                    db.audioRecordDao().update(newRecord);
-//                                                    dialog.dismiss();
-//                                                    leaveEditMode();
-//                                                }
-//                                            }).start();
-//                                            Toast.makeText(GalleryActivity.this, "File renamed successfully", Toast.LENGTH_SHORT).show();
-//                                        } else {
-//                                            Toast.makeText(GalleryActivity.this, "Failed to rename file", Toast.LENGTH_SHORT).show();
-//                                        }
-//                                    }
-//                                } else {
-//                                    Toast.makeText(GalleryActivity.this, "New name must be different", Toast.LENGTH_SHORT).show();
-//                                }
-                                finalRecord.setFilename(newFileName);
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        db.audioRecordDao().update(finalRecord);
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                mAdapter.notifyItemChanged(records.indexOf(finalRecord));
-                                                dialog.dismiss();
-                                                leaveEditMode();
-                                            }
-                                        });
+                                String oldFileName = finalRecord.getFilename();
+                                if (!newFileName.equals(oldFileName)) {
+                                    File oldFile = new File(finalRecord.getFilePath());
+                                    if (oldFile.exists()) {
+                                        String[] path = finalRecord.getFilePath().split(finalRecord.getFilename());
+                                        String newFilePath = path[0] + newFileName;
+                                        File newFile = new File(newFilePath);
+                                        if (oldFile.renameTo(newFile)) {
+                                            finalRecord.setFilename(newFileName);
+                                            finalRecord.setFilePath(newFilePath);
+                                            finalRecord.setAmpsPath(newFilePath);
+                                            new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    db.audioRecordDao().update(finalRecord);
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override   
+                                                        public void run() {
+                                                            mAdapter.notifyItemChanged(records.indexOf(finalRecord));
+                                                            dialog.dismiss();
+                                                            leaveEditMode();
+                                                        }
+                                                    });
+                                                }
+                                            }).start();
+                                            Toast.makeText(GalleryActivity.this, "File renamed successfully", Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(GalleryActivity.this, "Failed to rename file", Toast.LENGTH_SHORT).show();
+                                        }
                                     }
-                                }).start();
+                                } else {
+                                    Toast.makeText(GalleryActivity.this, "New name must be different", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         }
                     });
@@ -289,22 +279,23 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         });
 
     }
-
+    private void hideKeyBoard(View v){
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+    }
     private void leaveEditMode() {
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
         }
-
         editbar.setVisibility(View.GONE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-
-        for (AudioRecord record : records) {
-            record.setChecked(false);
+        for (AudioRecord rc : records ) {
+            rc.setChecked(false);
         }
-
         mAdapter.setEditMode(false);
+
     }
 
     private void disableRename() {
