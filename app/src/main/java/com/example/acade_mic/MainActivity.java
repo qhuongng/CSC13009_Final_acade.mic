@@ -174,6 +174,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                         db.audioRecordDao().insert(record);
                     }
                 }).start();
+                Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
             }
         }
     }

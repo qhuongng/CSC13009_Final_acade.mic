@@ -226,11 +226,19 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         public void onClick(View v) {
                             hideKeyBoard(dialogView);
                             String newFileName  = textInput.getText().toString();
-                            if (newFileName .isEmpty()) {
+                            if (newFileName.isEmpty()) {
                                 Toast.makeText(GalleryActivity.this, "A name is required", Toast.LENGTH_LONG).show();
+                            } else if (!newFileName.contains(".mp3")) {
+                                Toast.makeText(GalleryActivity.this, "Cannot change the type of file", Toast.LENGTH_LONG).show();
                             } else {
                                 String oldFileName = finalRecord.getFilename();
-                                if (!newFileName.equals(oldFileName)) {
+                                int check = 0;
+                                for (AudioRecord record:records) {
+                                    if(newFileName.equals(record.getFilename())) check++;
+                                }
+                                if(check > 0) {
+                                    Toast.makeText(GalleryActivity.this, "File name has been exists", Toast.LENGTH_SHORT).show();
+                                } else {
                                     File oldFile = new File(finalRecord.getFilePath());
                                     if (oldFile.exists()) {
                                         String[] path = finalRecord.getFilePath().split(finalRecord.getFilename());
@@ -245,7 +253,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                                 public void run() {
                                                     db.audioRecordDao().update(finalRecord);
                                                     runOnUiThread(new Runnable() {
-                                                        @Override   
+                                                        @Override
                                                         public void run() {
                                                             mAdapter.notifyItemChanged(records.indexOf(finalRecord));
                                                             dialog.dismiss();
@@ -259,8 +267,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                             Toast.makeText(GalleryActivity.this, "Failed to rename file", Toast.LENGTH_SHORT).show();
                                         }
                                     }
-                                } else {
-                                    Toast.makeText(GalleryActivity.this, "New name must be different", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }
