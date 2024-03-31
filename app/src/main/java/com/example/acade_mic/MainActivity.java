@@ -45,6 +45,7 @@ import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener {
@@ -76,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     private TextInputEditText fileNameInput;
     private MaterialButton btnCancel;
     private MaterialButton btnSave;
+    private ArrayList<AudioRecord> records;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         // cancel saving file
         btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
         btnSave = (MaterialButton) findViewById(R.id.btnSave);
+        fetchAll();
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -172,6 +175,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         File oldFile = new File(path + fileName);
         if (oldFile.exists()) {
+            int check = 0;
+            for (AudioRecord record:records) {
+                if(newFileName.equals(record.getFilename())) check++;
+            }
+            if(check > 0) {
+                Toast.makeText(this, "File name has been exists", Toast.LENGTH_SHORT).show();
+            } else {
             String newFilePath = path + newFileName;
             long timestamp = new Date().getTime();
             File newFile = new File(newFilePath);
@@ -185,9 +195,19 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 }).start();
                 Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
             }
+            }
         }
     }
-
+    private void fetchAll() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                records.clear();
+                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
+                records.addAll(queryResult);
+            }
+        }).start();
+    }
     private void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(fileNameInput);
