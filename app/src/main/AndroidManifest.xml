@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.WRITE_MEDIA_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_MEDIA_VIDEO"/>
     <uses-permission android:name="android.permission.WRITE_MEDIA_IMAGES"/>
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:allowBackup="true"
@@ -42,7 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <service android:name=".RecordForegroundService" android:foregroundServiceType="microphone"/>
         <receiver android:name=".NotificationReceiver" />
     </application>
 

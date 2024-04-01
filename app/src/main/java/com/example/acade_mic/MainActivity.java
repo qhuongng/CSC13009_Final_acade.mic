@@ -5,14 +5,17 @@ import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -50,7 +53,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener {
+public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
     public final int REQUEST_CODE = 200;
     public final int NOTI_REQUEST_CODE = 100;
     public static final String CHANNEL_ID = "my_channel_id";
@@ -66,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public boolean isRecording = false;
     public boolean isPaused = false;
     public ArrayList<Float> amplitudes;
-
+    public RecordForegroundService recordService = null;
     public BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
 
     public Timer timer;
@@ -99,7 +102,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 AppDatabase.class,
                 "audioRecords"
         ).build();
-
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -111,14 +113,18 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
         btnSave = (MaterialButton) findViewById(R.id.btnSave);
         fetchAll();
+
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isPaused) {
+                    recordService.start();
                     resumeRec();
                 } else if (isRecording) {
+                    recordService.start();
                     pauseRec();
                 } else {
+                    recordService.pause();
                     startRec();
                 }
                 vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -369,5 +375,28 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
         waveformView.addAmplitude((float) recorder.getMaxAmplitude());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Intent recordIntent = new Intent(this, RecordForegroundService.class);
+        recordIntent.putExtra("filePath", "Hello mina");
+        bindService(recordIntent, this, BIND_AUTO_CREATE);
+        startService(recordIntent);
+    }
+    boolean mBound = false;
+
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+        RecordForegroundService.LocalBinder binder = (RecordForegroundService.LocalBinder) service;
+        recordService = binder.getService();
+        mBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        boolean mBound = false;
     }
 }
