@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        records = new ArrayList<AudioRecord>();
         setContentView(R.layout.activity_main);
         createNotificationChannel(this);
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
@@ -202,7 +203,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         new Thread(new Runnable() {
             @Override
             public void run() {
-                records.clear();
                 List<AudioRecord> queryResult = db.audioRecordDao().getAll();
                 records.addAll(queryResult);
             }
