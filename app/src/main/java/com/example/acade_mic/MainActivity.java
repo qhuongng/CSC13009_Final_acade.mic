@@ -7,6 +7,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Build;
@@ -31,6 +32,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.room.Room;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -49,35 +51,46 @@ import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener {
-    private final int REQUEST_CODE = 200;
-    private final int NOTI_REQUEST_CODE = 100;
-    private static final String CHANNEL_ID = "my_channel_id";
-    private static final int NOTIFICATION_ID = 1;
-    private boolean permissionGranted;
-    private MediaRecorder recorder;
-    private String path = "";
-    private String fileName = "";
-    private ImageButton btnRec;
-    private ImageButton btnDel;
-    private ImageButton btnOk;
-    private ImageButton btnRecList;
-    private boolean isRecording = false;
-    private boolean isPaused = false;
-    private ArrayList<Float> amplitudes;
+    public final int REQUEST_CODE = 200;
+    public final int NOTI_REQUEST_CODE = 100;
+    public static final String CHANNEL_ID = "my_channel_id";
+    public static final int NOTIFICATION_ID = 1;
+    public static boolean permissionGranted;
+    public MediaRecorder recorder;
+    public String path = "";
+    public String fileName = "";
+    public ImageButton btnRec;
+    public ImageButton btnDel;
+    public ImageButton btnOk;
+    public ImageButton btnRecList;
+    public boolean isRecording = false;
+    public boolean isPaused = false;
+    public ArrayList<Float> amplitudes;
 
-    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+    public BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
 
-    private Timer timer;
-    private String duration;
-    private AppDatabase db = null;
-    private TextView tvTimer;
-    private WaveformView waveformView;
-    private Vibrator vibrator;
-    private View bottomSheetBG;
-    private TextInputEditText fileNameInput;
-    private MaterialButton btnCancel;
-    private MaterialButton btnSave;
-    private ArrayList<AudioRecord> records;
+    public Timer timer;
+    public String duration;
+    public AppDatabase db = null;
+    public TextView tvTimer;
+    public WaveformView waveformView;
+    public Vibrator vibrator;
+    public View bottomSheetBG;
+    public TextInputEditText fileNameInput;
+    public MaterialButton btnCancel;
+    public MaterialButton btnSave;
+    public ArrayList<AudioRecord> records;
+    private NotificationReceiver receiver;
+    private IntentFilter filter;
+
+    @Override
+    protected void onDestroy() {
+        if (receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
+        super.onDestroy();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,9 +182,15 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
+        filter = new IntentFilter();
+        filter.addAction("PAUSE_REC");
+        receiver = new NotificationReceiver();
+        receiver.setActivity(this);
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter);
     }
 
-    private void save() {
+    public void save() {
         String newFileName = fileNameInput.getText().toString();
 
         File oldFile = new File(path + fileName);
@@ -199,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             }
         }
     }
-    private void fetchAll() {
+    public void fetchAll() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -208,7 +227,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             }
         }).start();
     }
-    private void dismiss() {
+    public void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(fileNameInput);
 
@@ -217,7 +236,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }, 500);
     }
 
-    private void hideKeyBoard(View v) {
+    public void hideKeyBoard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
@@ -231,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }
     }
 
-    private void startRec() {
+    public void startRec() {
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
@@ -263,8 +282,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("NOTI HEREEEEEEEEEEEEEEEE");
-        showNotification(this, "Acade.mic", "Audio started recording");
         recorder.start();
         isRecording = true;
         isPaused = false;
@@ -280,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk.setVisibility(View.VISIBLE);
     }
 
-    private void resumeRec() {
+    public void resumeRec() {
         recorder.resume();
         isPaused = false;
         timer.start();
@@ -289,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
     }
 
-    private void pauseRec() {
+    public void pauseRec() {
         recorder.pause();
         isPaused = true;
         timer.pause();
@@ -298,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
     }
 
-    private void stopRec() {
+    public void stopRec() {
         timer.stop();
 
         recorder.stop();
@@ -356,6 +373,16 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void updateNotification(Context context, String updatedContent) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
+            return;
+        }
+
+        int flag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
+
+        Intent buttonIntent = new Intent(context, NotificationReceiver .class);
+        buttonIntent.setAction("PAUSE_REC");
+        PendingIntent buttonPendingIntent = PendingIntent.getBroadcast(this, 0, buttonIntent, flag);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_pause)
                 .setContentTitle("Acade.mic")
@@ -364,21 +391,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 .setContentText(updatedContent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
+                .addAction(R.drawable.ic_play, "Play", buttonPendingIntent)
                 .setOngoing(true);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
-            return;
-        }
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setAction("PLAY_PAUSE_ACTION");
-        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        builder.setContentIntent(pi);
-
-        Intent buttonIntent = new Intent(context, MainActivity.class);
-        PendingIntent buttonPendingIntent = PendingIntent.getActivity(context, 0, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        builder.addAction(R.drawable.ic_play, "Play", buttonPendingIntent);
 
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -388,7 +402,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
     @Override
     public void onTimerTick(String duration) {
-        updateNotification(this, duration);
+        String[] parts = duration.split("\\.");
+        if(parts[1].equals("00")){
+            updateNotification(this, parts[0]);
+        }
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
         waveformView.addAmplitude((float) recorder.getMaxAmplitude());
