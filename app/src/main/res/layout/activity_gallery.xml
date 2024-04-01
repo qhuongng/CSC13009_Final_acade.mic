@@ -94,30 +94,39 @@
             >
             <ImageButton
                 android:id="@+id/btnDelete"
+                android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/disabledDarkGray"
                 android:background="@drawable/ic_round_delete"
                 android:layout_gravity="center"/>
 
             <TextView
+                android:id="@+id/tvDelete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
                 android:text="Delete"/>
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:gravity="center">
             <ImageButton
                 android:id="@+id/btnEdit"
+                android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/disabledDarkGray"
                 android:background="@drawable/ic_round_edit"
-                android:layout_gravity="center"/>
+                />
             <TextView
+                android:id="@+id/tvEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
                 android:text="Edit"/>
         </LinearLayout>
     </LinearLayout>
