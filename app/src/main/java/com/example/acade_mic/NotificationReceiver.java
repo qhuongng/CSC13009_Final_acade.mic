@@ -15,8 +15,7 @@ public class NotificationReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction() != null && intent.getAction().equals("PAUSE_REC")) {
-            System.out.println("EREHhiwehfiwehfiwehfdiwehuid");
-            activity.pauseRec();
+            System.out.println("Message received");
         }
     }
 }

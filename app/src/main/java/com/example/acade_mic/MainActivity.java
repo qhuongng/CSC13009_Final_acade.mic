@@ -80,17 +80,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public MaterialButton btnCancel;
     public MaterialButton btnSave;
     public ArrayList<AudioRecord> records;
-    private NotificationReceiver receiver;
-    private IntentFilter filter;
 
-    @Override
-    protected void onDestroy() {
-        if (receiver != null) {
-            unregisterReceiver(receiver);
-            receiver = null;
-        }
-        super.onDestroy();
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +136,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel.setOnClickListener((View v) -> {
             stopRec();
             Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancel(NOTIFICATION_ID);
         });
 
         btnOk = (ImageButton) findViewById(R.id.btnOk);
@@ -181,13 +173,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             //
             dismiss();
         });
-
-        filter = new IntentFilter();
-        filter.addAction("PAUSE_REC");
-        receiver = new NotificationReceiver();
-        receiver.setActivity(this);
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, filter);
     }
 
     public void save() {
@@ -307,6 +292,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void pauseRec() {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(NOTIFICATION_ID);
         recorder.pause();
         isPaused = true;
         timer.pause();
@@ -316,6 +303,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void stopRec() {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(NOTIFICATION_ID);
         timer.stop();
 
         recorder.stop();
@@ -347,42 +336,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }
     }
 
-    public void showNotification(Context context, String title, String content) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_pause)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setSound(null)
-                .setSilent(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .setOngoing(true);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
-            return;
-        }
-
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT| PendingIntent.FLAG_IMMUTABLE);
-        builder.setContentIntent(pi);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(0, builder.build());
-    }
 
     public void updateNotification(Context context, String updatedContent) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
             return;
         }
-
-        int flag = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : PendingIntent.FLAG_UPDATE_CURRENT;
-
-        Intent buttonIntent = new Intent(context, NotificationReceiver .class);
-        buttonIntent.setAction("PAUSE_REC");
-        PendingIntent buttonPendingIntent = PendingIntent.getBroadcast(this, 0, buttonIntent, flag);
+        ;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_pause)
                 .setContentTitle("Acade.mic")
@@ -391,8 +351,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 .setContentText(updatedContent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .addAction(R.drawable.ic_play, "Play", buttonPendingIntent)
                 .setOngoing(true);
+
 
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
