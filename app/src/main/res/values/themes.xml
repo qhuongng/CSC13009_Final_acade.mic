@@ -29,7 +29,7 @@
         <item name="boxCornerRadiusTopStart">26dp</item>
         <item name="boxCornerRadiusTopEnd">26dp</item>
     </style>
-    
+
     <style name="SearchInputStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@color/gray</item>
         <item name="boxStrokeWidth">0dp</item>
@@ -43,5 +43,20 @@
 
         <item name="endIconMode">clear_text</item>
         <item name="startIconDrawable">@drawable/ic_search</item>
+    </style>
+
+    <style name="Theme.Academic.AppWidgetContainerParent" parent="@android:style/Theme.DeviceDefault">
+        <!-- Radius of the outer bound of widgets to make the rounded corners -->
+        <item name="appWidgetRadius">16dp</item>
+        <!--
+        Radius of the inner view's bound of widgets to make the rounded corners.
+        It needs to be 8dp or less than the value of appWidgetRadius
+        -->
+        <item name="appWidgetInnerRadius">8dp</item>
+    </style>
+
+    <style name="Theme.Academic.AppWidgetContainer" parent="Theme.Academic.AppWidgetContainerParent">
+        <!-- Apply padding to avoid the content of the widget colliding with the rounded corners -->
+        <item name="appWidgetPadding">16dp</item>
     </style>
 </resources>
