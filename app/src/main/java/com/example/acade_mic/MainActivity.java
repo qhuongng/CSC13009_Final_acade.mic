@@ -116,7 +116,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         Intent recordIntent = new Intent(this, RecordForegroundService.class);
         bindService(recordIntent, this, BIND_AUTO_CREATE);
-        startForegroundService(recordIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(recordIntent);
+        } else {
+            startService(recordIntent);
+        }
 
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
