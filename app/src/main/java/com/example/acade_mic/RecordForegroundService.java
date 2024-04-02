@@ -34,12 +34,14 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     public String path = "";
     public String fileName = "";
     public Timer timer;
+    String currentTime = "00:00";
     private final IBinder mBinder = new LocalBinder();
 
     @Override
     public void onTimerTick(String duration) {
         String[] parts = duration.split("\\.");
         if(parts[1].equals("00")){
+            currentTime = parts[0];
             updateNotification(this, parts[0]);
         }
     }
@@ -86,28 +88,43 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
                 .setOngoing(true)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
                 .setContentIntent(resultPendingIntent);
-
-
         startForeground(9999, builder.build());
+
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_UPDATE");
+        widgetIntent.putExtra("message", updatedContent);
+        getBaseContext().sendBroadcast(widgetIntent);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel(getBaseContext());
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_pause)
+                .setContentTitle("Acade.mic")
+                .setSound(null)
+                .setSilent(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE);
+        startForeground(NOTIFICATION_ID, mBuilder.build());
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(NOTIFICATION_ID);
+    }
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT |PendingIntent.FLAG_IMMUTABLE);
-
-        Notification notification = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("My Awesome App")
-                .setContentText("Doing some work...")
-                .setContentIntent(pendingIntent).build();
-
-        startForeground(1337, notification);
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        timer.stop();
+        recorder.stop();
+        stopSelf();
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_UPDATE");
+        widgetIntent.putExtra("message", "00:00");
+        getBaseContext().sendBroadcast(widgetIntent);
     }
 
     public void start(String thePath, String theFileName){
@@ -140,20 +157,31 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     public void pause(){
         recorder.pause();
         timer.pause();
-        System.out.println("Service is paused" + filePath);
+
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_PAUSED");
+        widgetIntent.putExtra("message", currentTime);
+        getBaseContext().sendBroadcast(widgetIntent);
+
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancelAll();
     }
 
     public void resume(){
         recorder.resume();
         timer.start();
-        System.out.println("Service is resumed" + filePath);
     }
 
     public void stop(){
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_UPDATE");
+        widgetIntent.putExtra("message", "00:00");
+        getBaseContext().sendBroadcast(widgetIntent);
         recorder.stop();
         timer.stop();
         recorder.release();
         recorder = null;
-        System.out.println("Service is stoppped" + filePath);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancelAll();
     }
 }

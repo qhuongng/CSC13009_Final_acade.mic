@@ -54,9 +54,6 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
     public final int REQUEST_CODE = 200;
-    public final int NOTI_REQUEST_CODE = 100;
-    public static final String CHANNEL_ID = "my_channel_id";
-    public static final int NOTIFICATION_ID = 1;
     public static boolean permissionGranted;
     public String path = "";
     public String fileName = "";
@@ -88,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         super.onCreate(savedInstanceState);
         records = new ArrayList<AudioRecord>();
         setContentView(R.layout.activity_main);
-        createNotificationChannel(this);
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
@@ -120,6 +116,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             startService(recordIntent);
         }
 
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_UPDATE");
+        widgetIntent.putExtra("message", "00:00");
+        getBaseContext().sendBroadcast(widgetIntent);
+
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -147,8 +148,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel.setOnClickListener((View v) -> {
             stopRec();
             Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
-            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.cancel(NOTIFICATION_ID);
         });
 
         btnOk = (ImageButton) findViewById(R.id.btnOk);
@@ -284,8 +283,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void pauseRec() {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(NOTIFICATION_ID);
         recordService.pause();
         isPaused = true;
         timer.pause();
@@ -295,8 +292,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void stopRec() {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.cancel(NOTIFICATION_ID);
         timer.stop();
 
         recordService.stop();
@@ -312,20 +307,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         tvTimer.setText("00:00:00");
         amplitudes = waveformView.clear();
     }
-
-
-    public static void createNotificationChannel(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "My Channel";
-            String description = "This is my channel";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
-
 
 
 
@@ -353,4 +334,5 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         boolean mBound = false;
         recordService = null;
     }
+
 }

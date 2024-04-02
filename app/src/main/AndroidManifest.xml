@@ -30,6 +30,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="PLAY_BUTTON"/>
             </intent-filter>
 
             <meta-data
@@ -55,12 +56,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <service
             android:name=".RecordForegroundService"
-            android:foregroundServiceType="microphone" />
-
-        <receiver android:name=".NotificationReceiver" />
+            android:foregroundServiceType="microphone" android:stopWithTask="true"/>
     </application>
 
 </manifest>
