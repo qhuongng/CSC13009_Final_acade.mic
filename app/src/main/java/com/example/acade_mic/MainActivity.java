@@ -326,7 +326,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
             return;
         }
-        ;
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_pause)
                 .setContentTitle("Acade.mic")
@@ -335,7 +338,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 .setContentText(updatedContent)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .setOngoing(true);
+                .setOngoing(true)
+                .setContentIntent(resultPendingIntent);
 
 
         NotificationManager mNotificationManager =
@@ -359,9 +363,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     protected void onStart() {
         super.onStart();
         Intent recordIntent = new Intent(this, RecordForegroundService.class);
-        recordIntent.putExtra("filePath", "Hello mina");
         bindService(recordIntent, this, BIND_AUTO_CREATE);
-        startService(recordIntent);
+        startForegroundService(recordIntent);
     }
     boolean mBound = false;
 
@@ -376,5 +379,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     @Override
     public void onServiceDisconnected(ComponentName name) {
         boolean mBound = false;
+        recordService = null;
     }
 }

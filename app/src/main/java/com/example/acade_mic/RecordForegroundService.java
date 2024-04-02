@@ -36,8 +36,6 @@ public class RecordForegroundService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        filePath = intent.getStringExtra("filePath");
-        System.out.println("Service created " + filePath);
         return START_STICKY;
     }
 
