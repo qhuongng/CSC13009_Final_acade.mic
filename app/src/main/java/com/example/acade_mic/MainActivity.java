@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -59,7 +58,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public static final String CHANNEL_ID = "my_channel_id";
     public static final int NOTIFICATION_ID = 1;
     public static boolean permissionGranted;
-    public MediaRecorder recorder;
     public String path = "";
     public String fileName = "";
     public ImageButton btnRec;
@@ -329,39 +327,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
 
-    public void updateNotification(Context context, String updatedContent) {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
-            return;
-        }
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0,
-                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_pause)
-                .setContentTitle("Acade.mic")
-                .setSound(null)
-                .setSilent(true)
-                .setContentText(updatedContent)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .setOngoing(true)
-                .setContentIntent(resultPendingIntent);
-
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(NOTIFICATION_ID, builder.build());
-    }
 
 
     @Override
     public void onTimerTick(String duration) {
-        String[] parts = duration.split("\\.");
-        if(parts[1].equals("00")){
-            updateNotification(this, parts[0]);
-        }
+
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
         waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());

@@ -1,5 +1,6 @@
 package com.example.acade_mic;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -7,12 +8,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 
 import java.io.FileNotFoundException;
@@ -22,14 +25,24 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class RecordForegroundService extends Service {
+public class RecordForegroundService extends Service implements Timer.OnTimerTickListener {
     private static final String CHANNEL_ID = "myChannel";
+    private static final int NOTIFICATION_ID = 169;
+    private static final int NOTI_REQUEST_CODE = 269;
     public String filePath;
     public MediaRecorder recorder;
     public String path = "";
     public String fileName = "";
     public Timer timer;
     private final IBinder mBinder = new LocalBinder();
+
+    @Override
+    public void onTimerTick(String duration) {
+        String[] parts = duration.split("\\.");
+        if(parts[1].equals("00")){
+            updateNotification(this, parts[0]);
+        }
+    }
 
     public class LocalBinder extends Binder {
         RecordForegroundService getService() {
@@ -59,6 +72,26 @@ public class RecordForegroundService extends Service {
         }
     }
 
+    public void updateNotification(Context context, String updatedContent) {
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(this, 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_pause)
+                .setContentTitle("Acade.mic")
+                .setSound(null)
+                .setSilent(true)
+                .setContentText(updatedContent)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
+                .setOngoing(true)
+                .setContentIntent(resultPendingIntent);
+
+
+        startForeground(9999, builder.build());
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -78,6 +111,7 @@ public class RecordForegroundService extends Service {
     }
 
     public void start(String thePath, String theFileName){
+        timer = new Timer(this);
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
@@ -100,20 +134,24 @@ public class RecordForegroundService extends Service {
             e.printStackTrace();
         }
         recorder.start();
+        timer.start();
     }
 
     public void pause(){
         recorder.pause();
+        timer.pause();
         System.out.println("Service is paused" + filePath);
     }
 
     public void resume(){
         recorder.resume();
+        timer.start();
         System.out.println("Service is resumed" + filePath);
     }
 
     public void stop(){
         recorder.stop();
+        timer.stop();
         recorder.release();
         recorder = null;
         System.out.println("Service is stoppped" + filePath);
