@@ -118,13 +118,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             @Override
             public void onClick(View v) {
                 if (isPaused) {
-                    recordService.start();
+                    recordService.resume();
                     resumeRec();
                 } else if (isRecording) {
-                    recordService.start();
+                    recordService.pause();
                     pauseRec();
                 } else {
-                    recordService.pause();
                     startRec();
                 }
                 vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -246,12 +245,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
         }
-
-        recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-
         if (getExternalFilesDir(null) != null) {
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
@@ -259,21 +252,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
+        recordService.start(path, fileName);
 
-        try {
-            recorder.setOutputFile(new FileOutputStream(path + fileName).getFD());
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            recorder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        recorder.start();
         isRecording = true;
         isPaused = false;
         timer.start();
@@ -289,7 +269,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void resumeRec() {
-        recorder.resume();
+        recordService.resume();
         isPaused = false;
         timer.start();
         // change the button
@@ -300,7 +280,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public void pauseRec() {
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancel(NOTIFICATION_ID);
-        recorder.pause();
+        recordService.pause();
         isPaused = true;
         timer.pause();
         // change the button
@@ -313,9 +293,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         mNotificationManager.cancel(NOTIFICATION_ID);
         timer.stop();
 
-        recorder.stop();
-        recorder.release();
-        recorder = null;
+        recordService.stop();
         isPaused = false;
         isRecording = false;
 
@@ -374,7 +352,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
-        waveformView.addAmplitude((float) recorder.getMaxAmplitude());
+        waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
     }
 
     @Override
