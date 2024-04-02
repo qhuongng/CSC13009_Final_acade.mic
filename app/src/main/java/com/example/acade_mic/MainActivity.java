@@ -114,6 +114,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnSave = (MaterialButton) findViewById(R.id.btnSave);
         fetchAll();
 
+        Intent recordIntent = new Intent(this, RecordForegroundService.class);
+        bindService(recordIntent, this, BIND_AUTO_CREATE);
+        startForegroundService(recordIntent);
+
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -359,13 +363,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Intent recordIntent = new Intent(this, RecordForegroundService.class);
-        bindService(recordIntent, this, BIND_AUTO_CREATE);
-        startForegroundService(recordIntent);
-    }
     boolean mBound = false;
 
     @Override
