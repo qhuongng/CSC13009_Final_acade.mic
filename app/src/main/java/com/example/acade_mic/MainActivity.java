@@ -55,14 +55,10 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
     public final int REQUEST_CODE = 200;
     public static boolean permissionGranted;
-    public String path = "";
-    public String fileName = "";
     public ImageButton btnRec;
     public ImageButton btnDel;
     public ImageButton btnOk;
     public ImageButton btnRecList;
-    public boolean isRecording = false;
-    public boolean isPaused = false;
     public ArrayList<Float> amplitudes;
     public RecordForegroundService recordService = null;
     public BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
@@ -72,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public AppDatabase db = null;
     public TextView tvTimer;
     public WaveformView waveformView;
+    public String path;
+    public String fileName;
     public Vibrator vibrator;
     public View bottomSheetBG;
     public TextInputEditText fileNameInput;
@@ -79,6 +77,21 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public MaterialButton btnSave;
     public ArrayList<AudioRecord> records;
 
+    private final int FROM_WIDGET = 0;
+    private final int FROM_ACTIVITY = 1;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(recordService != null && recordService.isRecording && recordService.isPaused){
+            path = recordService.path;
+            fileName = recordService.fileName;
+            pauseRec();
+        }else if(recordService != null && recordService.isRecording && recordService.isPaused == false){
+            path = recordService.path;
+            fileName = recordService.fileName;
+            resumeRec();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,18 +129,14 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             startService(recordIntent);
         }
 
-        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
-        widgetIntent.setAction("TIME_UPDATE");
-        widgetIntent.putExtra("message", "00:00");
-        getBaseContext().sendBroadcast(widgetIntent);
 
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isPaused) {
+                if ( recordService.isPaused) {
                     recordService.resume();
                     resumeRec();
-                } else if (isRecording) {
+                } else if (recordService.isRecording) {
                     recordService.pause();
                     pauseRec();
                 } else {
@@ -183,12 +192,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             //
             dismiss();
         });
+
     }
 
     public void save() {
         String newFileName = fileNameInput.getText().toString();
 
-        File oldFile = new File(path + fileName);
+        File oldFile = new File(recordService.path + recordService.fileName);
         if (oldFile.exists()) {
             int check = 0;
             for (AudioRecord record:records) {
@@ -197,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             if(check > 0) {
                 Toast.makeText(this, "File name has been exists", Toast.LENGTH_SHORT).show();
             } else {
-            String newFilePath = path + newFileName;
+            String newFilePath = recordService.path + newFileName;
             long timestamp = new Date().getTime();
             File newFile = new File(newFilePath);
             if (oldFile.renameTo(newFile)) {
@@ -250,6 +260,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
         }
+
         if (getExternalFilesDir(null) != null) {
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
@@ -257,10 +268,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
-        recordService.start(path, fileName);
-
-        isRecording = true;
-        isPaused = false;
+        recordService.startFromActivity(path, fileName);
+        recordService.isRecording = true;
+        recordService.isPaused = false;
+        timer = new Timer(this);
         timer.start();
 
         // change the button
@@ -274,8 +285,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     public void resumeRec() {
+        btnDel.setClickable(true);
+
+        btnRecList.setVisibility(View.GONE);
+        btnOk.setVisibility(View.VISIBLE);
+        btnDel.setClickable(true);
         recordService.resume();
-        isPaused = false;
+        recordService.isPaused = false;
         timer.start();
         // change the button
         btnRec.setImageResource(R.drawable.ic_pause);
@@ -284,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
     public void pauseRec() {
         recordService.pause();
-        isPaused = true;
+        recordService.isPaused = true;
         timer.pause();
         // change the button
         btnRec.setImageResource(R.drawable.ic_rec);
@@ -295,8 +311,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         timer.stop();
 
         recordService.stop();
-        isPaused = false;
-        isRecording = false;
+        recordService.isPaused = false;
+        recordService.isRecording = false;
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -327,6 +343,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         RecordForegroundService.LocalBinder binder = (RecordForegroundService.LocalBinder) service;
         recordService = binder.getService();
         mBound = true;
+        if(recordService.isRecording){
+            path = recordService.path;
+            fileName = recordService.fileName;
+            resumeRec();
+        }
     }
 
     @Override

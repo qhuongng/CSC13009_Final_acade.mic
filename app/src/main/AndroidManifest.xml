@@ -58,7 +58,7 @@
         </activity>
         <service
             android:name=".RecordForegroundService"
-            android:foregroundServiceType="microphone" android:stopWithTask="true"/>
+            android:foregroundServiceType="microphone"/>
     </application>
 
 </manifest>

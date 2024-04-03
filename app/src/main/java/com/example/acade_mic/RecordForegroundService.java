@@ -37,10 +37,16 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     String currentTime = "00:00";
     private final IBinder mBinder = new LocalBinder();
 
+    private final int FROM_WIDGET = 0;
+    private final int FROM_ACTIVITY = 1;
+
+    public boolean isRecording = false;
+    public boolean isPaused = false;
+
     @Override
     public void onTimerTick(String duration) {
         String[] parts = duration.split("\\.");
-        if(parts[1].equals("00")){
+        if (parts[1].equals("00")) {
             currentTime = parts[0];
             updateNotification(this, parts[0]);
         }
@@ -51,6 +57,7 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
             return RecordForegroundService.this;
         }
     }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -59,6 +66,19 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && intent.getStringExtra("message") != null && intent.getStringExtra("message").equals("PLAY")) {
+            if (isRecording) {
+                resume();
+                System.out.println("RESUME HERE");
+            } else {
+                start();
+                System.out.println("START HERE");
+            }
+        }
+        if (intent != null && intent.getStringExtra("message") != null && intent.getStringExtra("message").equals("PAUSE")) {
+            pause();
+            System.out.println("PAUSE HERE");
+        }
         return START_STICKY;
     }
 
@@ -96,6 +116,10 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         widgetIntent.setAction("TIME_UPDATE");
         widgetIntent.putExtra("message", updatedContent);
         getBaseContext().sendBroadcast(widgetIntent);
+
+        Intent intent2 = new Intent(getBaseContext(), RecorderWidget.class);
+        intent2.setAction("PLAY_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent2);
     }
 
     @Override
@@ -113,6 +137,26 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         startForeground(NOTIFICATION_ID, mBuilder.build());
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         mNotificationManager.cancel(NOTIFICATION_ID);
+        Thread thread = new Thread(()->{
+            while(true){
+                try {
+                    Thread.sleep(500);
+                    if(isRecording == false && isPaused == false){
+                        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+                        widgetIntent.setAction("TIME_UPDATE");
+                        widgetIntent.putExtra("message", "00:00");
+                        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+                        intent.setAction("PAUSE_BUTTON_SWITCH");
+                        getBaseContext().sendBroadcast(intent);
+                        getBaseContext().sendBroadcast(widgetIntent);
+                        System.out.println("HALLo");
+                    }
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+        thread.start();
     }
 
     @Override
@@ -124,16 +168,24 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
         widgetIntent.setAction("TIME_UPDATE");
         widgetIntent.putExtra("message", "00:00");
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PAUSE_BUTTON");
+        getBaseContext().sendBroadcast(intent);
         getBaseContext().sendBroadcast(widgetIntent);
     }
 
-    public void start(String thePath, String theFileName){
+    public void startFromActivity(String thePath, String theFileName) {
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PLAY_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent);
+
         timer = new Timer(this);
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-
+        isRecording = true;
+        isPaused = false;
         path = thePath;
         fileName = theFileName;
 
@@ -154,29 +206,81 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         timer.start();
     }
 
-    public void pause(){
+    public void start() {
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PLAY_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent);
+        timer = new Timer(this);
+        recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        isRecording = true;
+        isPaused = false;
+
+        if (getExternalFilesDir(null) != null) {
+            path = getExternalFilesDir(null).getAbsolutePath() + "/";
+        }
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
+        String date = sdf.format(new Date());
+        fileName = "recording_" + date + ".mp3";
+        isRecording = true;
+        isPaused = false;
+
+        try {
+            recorder.setOutputFile(new FileOutputStream(path + fileName).getFD());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            recorder.prepare();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        recorder.start();
+        timer.start();
+    }
+
+    public void pause() {
         recorder.pause();
         timer.pause();
-
+        isPaused = true;
         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
         widgetIntent.setAction("TIME_PAUSED");
         widgetIntent.putExtra("message", currentTime);
         getBaseContext().sendBroadcast(widgetIntent);
 
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PAUSE_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent);
+
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancelAll();
     }
 
-    public void resume(){
+    public void resume() {
+        isPaused = false;
         recorder.resume();
         timer.start();
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PLAY_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent);
     }
 
-    public void stop(){
+    public void stop() {
+        isPaused = false;
+        isRecording = false;
         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
         widgetIntent.setAction("TIME_UPDATE");
         widgetIntent.putExtra("message", "00:00");
         getBaseContext().sendBroadcast(widgetIntent);
+        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+        intent.setAction("PAUSE_BUTTON_SWITCH");
+        getBaseContext().sendBroadcast(intent);
         recorder.stop();
         timer.stop();
         recorder.release();
