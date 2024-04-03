@@ -150,6 +150,15 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
                         getBaseContext().sendBroadcast(intent);
                         getBaseContext().sendBroadcast(widgetIntent);
                         System.out.println("HALLo");
+                    }else if(isRecording == true && isPaused == true){
+                        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+                        widgetIntent.setAction("TIME_PAUSED");
+                        widgetIntent.putExtra("message", currentTime);
+                        getBaseContext().sendBroadcast(widgetIntent);
+
+                        Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
+                        intent.setAction("PAUSE_BUTTON_SWITCH");
+                        getBaseContext().sendBroadcast(intent);
                     }
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
