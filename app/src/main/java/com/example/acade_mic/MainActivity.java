@@ -85,10 +85,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if(recordService != null && recordService.isRecording && recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
+            System.out.println("SHOULD PAUSE");
             pauseRec();
-        }else if(recordService != null && recordService.isRecording && recordService.isPaused == false){
+        }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
+            System.out.println("SHOULD RESUME");
             resumeRec();
         }
     }
@@ -344,9 +346,15 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         recordService = binder.getService();
         mBound = true;
         if(recordService.isRecording){
-            path = recordService.path;
-            fileName = recordService.fileName;
-            resumeRec();
+            if(recordService.isPaused){
+                path = recordService.path;
+                fileName = recordService.fileName;
+                pauseRec();
+            }else{
+                path = recordService.path;
+                fileName = recordService.fileName;
+                resumeRec();
+            }
         }
     }
 
