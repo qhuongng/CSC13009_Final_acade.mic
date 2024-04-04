@@ -48,7 +48,6 @@ public class RecorderWidget extends AppWidgetProvider {
                 }
                 break;
             case "PLAY_BUTTON_SWITCH":
-                System.out.println("PLAY SWITCHEDDD");
                 RemoteViews views5 = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 views5.setViewVisibility(R.id.widget_pause_btn, View.VISIBLE);
                 views5.setViewVisibility(R.id.widget_play_btn, View.GONE);
@@ -56,7 +55,6 @@ public class RecorderWidget extends AppWidgetProvider {
                         new ComponentName(context, RecorderWidget.class), views5);
                 break;
             case "PAUSE_BUTTON_SWITCH":
-                System.out.println("PAUSE SWITCHEDDD");
                 RemoteViews views6 = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 views6.setViewVisibility(R.id.widget_pause_btn, View.GONE);
                 views6.setViewVisibility(R.id.widget_play_btn, View.VISIBLE);

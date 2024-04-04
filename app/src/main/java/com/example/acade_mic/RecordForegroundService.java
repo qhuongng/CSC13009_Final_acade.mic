@@ -34,7 +34,7 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     public String path = "";
     public String fileName = "";
     public Timer timer;
-    String currentTime = "00:00";
+    String currentTime = "00:00.00";
     private final IBinder mBinder = new LocalBinder();
 
     private final int FROM_WIDGET = 0;
@@ -42,13 +42,36 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
 
     public boolean isRecording = false;
     public boolean isPaused = false;
+    long startTimeMillis = 0;
+
+    long totalTimeMillis = 0;
+
+    long pauseTimeMillis = 0;
+
+    long totalPauseTime = 0;
+
+    public String format(long duration) {
+        long millis = duration % 1000;
+        long seconds = (duration / 1000) % 60;
+        long minutes = (duration / (1000 * 60)) % 60;
+        long hours = (duration / (1000 * 60 * 60));
+
+        String formatted;
+        if (hours > 0)
+            formatted = String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, millis / 10);
+        else
+            formatted = String.format("%02d:%02d.%02d", minutes, seconds, millis / 10);
+
+        return formatted;
+    }
 
     @Override
     public void onTimerTick(String duration) {
-        String[] parts = duration.split("\\.");
-        if (parts[1].equals("00")) {
-            currentTime = parts[0];
-            updateNotification(this, parts[0]);
+        if(isRecording && !isPaused){
+            totalTimeMillis = System.currentTimeMillis() - startTimeMillis - totalPauseTime;
+            duration = format(totalTimeMillis);
+            currentTime = duration;
+            updateNotification(this, duration.split("//.")[0]);
         }
     }
 
@@ -149,7 +172,6 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
                         intent.setAction("PAUSE_BUTTON_SWITCH");
                         getBaseContext().sendBroadcast(intent);
                         getBaseContext().sendBroadcast(widgetIntent);
-                        System.out.println("HALLo");
                     }else if(isRecording == true && isPaused == true){
                         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
                         widgetIntent.setAction("TIME_PAUSED");
@@ -212,6 +234,7 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
             e.printStackTrace();
         }
         recorder.start();
+        startTimeMillis = System.currentTimeMillis();
         timer.start();
     }
 
@@ -251,11 +274,16 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
             e.printStackTrace();
         }
         recorder.start();
+        startTimeMillis = System.currentTimeMillis();
+        totalPauseTime = 0;
+        totalTimeMillis = 0;
         timer.start();
     }
 
     public void pause() {
+        System.out.println("SERVICE PAUSED");
         recorder.pause();
+        pauseTimeMillis = System.currentTimeMillis();
         timer.pause();
         isPaused = true;
         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
@@ -272,8 +300,11 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     }
 
     public void resume() {
+        System.out.println("SERVICE RESUMED");
+
         isPaused = false;
         recorder.resume();
+        totalPauseTime += System.currentTimeMillis() - pauseTimeMillis;
         timer.start();
         Intent intent = new Intent(getBaseContext(), RecorderWidget.class);
         intent.setAction("PLAY_BUTTON_SWITCH");
@@ -283,6 +314,8 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     public void stop() {
         isPaused = false;
         isRecording = false;
+        totalTimeMillis = 0;
+        totalPauseTime = 0;
         Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
         widgetIntent.setAction("TIME_UPDATE");
         widgetIntent.putExtra("message", "00:00");

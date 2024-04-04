@@ -86,12 +86,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             path = recordService.path;
             fileName = recordService.fileName;
             System.out.println("SHOULD PAUSE");
-            pauseRec();
+            pauseRec(FROM_WIDGET);
+            syncPauseTime();
         }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
             System.out.println("SHOULD RESUME");
-            resumeRec();
+            resumeRec(FROM_WIDGET);
         }
     }
 
@@ -136,11 +137,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             @Override
             public void onClick(View v) {
                 if ( recordService.isPaused) {
-                    recordService.resume();
-                    resumeRec();
+                    resumeRec(FROM_ACTIVITY);
                 } else if (recordService.isRecording) {
-                    recordService.pause();
-                    pauseRec();
+                    pauseRec(FROM_ACTIVITY);
                 } else {
                     startRec();
                 }
@@ -271,8 +270,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
         recordService.startFromActivity(path, fileName);
-        recordService.isRecording = true;
-        recordService.isPaused = false;
         timer = new Timer(this);
         timer.start();
 
@@ -286,23 +283,30 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk.setVisibility(View.VISIBLE);
     }
 
-    public void resumeRec() {
+    public void resumeRec(int from) {
         btnDel.setClickable(true);
 
         btnRecList.setVisibility(View.GONE);
         btnOk.setVisibility(View.VISIBLE);
         btnDel.setClickable(true);
-        recordService.resume();
-        recordService.isPaused = false;
+        if(from != FROM_WIDGET){
+            recordService.resume();
+        }
         timer.start();
         // change the button
         btnRec.setImageResource(R.drawable.ic_pause);
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
     }
 
-    public void pauseRec() {
-        recordService.pause();
-        recordService.isPaused = true;
+    public void pauseRec(int from) {
+        if(from != FROM_WIDGET){
+            recordService.pause();
+        }
+
+        btnRecList.setVisibility(View.GONE);
+        btnOk.setVisibility(View.VISIBLE);
+
+        btnDel.setClickable(true);
         timer.pause();
         // change the button
         btnRec.setImageResource(R.drawable.ic_rec);
@@ -313,8 +317,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         timer.stop();
 
         recordService.stop();
-        recordService.isPaused = false;
-        recordService.isRecording = false;
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -326,15 +328,19 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         amplitudes = waveformView.clear();
     }
 
-
-
+    public void syncPauseTime(){
+        tvTimer.setText(recordService.currentTime);
+        this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
+        waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+    }
 
     @Override
     public void onTimerTick(String duration) {
-
-        tvTimer.setText(duration);
-        this.duration = duration.substring(0, duration.length() - 3);
-        waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        if(recordService != null && recordService.isRecording && !recordService.isPaused){
+            tvTimer.setText(recordService.currentTime);
+            this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
+            waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        }
     }
 
     boolean mBound = false;
@@ -349,11 +355,12 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             if(recordService.isPaused){
                 path = recordService.path;
                 fileName = recordService.fileName;
-                pauseRec();
+                pauseRec(FROM_WIDGET);
+                syncPauseTime();
             }else{
                 path = recordService.path;
                 fileName = recordService.fileName;
-                resumeRec();
+                resumeRec(FROM_WIDGET);
             }
         }
     }
