@@ -30,7 +30,6 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="PLAY_BUTTON"/>
             </intent-filter>
 
             <meta-data
@@ -52,13 +51,12 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <service
             android:name=".RecordForegroundService"
-            android:foregroundServiceType="microphone" android:stopWithTask="true"/>
+            android:foregroundServiceType="microphone"/>
     </application>
 
 </manifest>

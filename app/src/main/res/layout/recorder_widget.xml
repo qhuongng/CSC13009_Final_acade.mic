@@ -37,7 +37,19 @@
         android:layout_gravity="center_vertical"
         android:id="@+id/widget_play_btn"
         android:textSize="15sp"
-        android:text="Open App"
+        android:text="Play"
+        android:visibility="visible"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_play"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/widget_pause_btn"
+        android:textSize="15sp"
+        android:text="Pause"
+        android:visibility="gone"
         />
 
 </LinearLayout>
