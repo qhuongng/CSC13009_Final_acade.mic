@@ -13,5 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
+
 rootProject.name = "acade.mic"
 include(":app")

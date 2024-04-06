@@ -5,13 +5,16 @@ import android.annotation.SuppressLint;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -31,6 +34,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.room.Room;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -48,43 +52,39 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener {
-    private final int REQUEST_CODE = 200;
-    private final int NOTI_REQUEST_CODE = 100;
-    private static final String CHANNEL_ID = "my_channel_id";
-    private static final int NOTIFICATION_ID = 1;
-    private boolean permissionGranted;
-    private MediaRecorder recorder;
-    private String path = "";
-    private String fileName = "";
-    private ImageButton btnRec;
-    private ImageButton btnDel;
-    private ImageButton btnOk;
-    private ImageButton btnRecList;
-    private boolean isRecording = false;
-    private boolean isPaused = false;
-    private ArrayList<Float> amplitudes;
+public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
+    public final int REQUEST_CODE = 200;
+    public static boolean permissionGranted;
+    public String path = "";
+    public String fileName = "";
+    public ImageButton btnRec;
+    public ImageButton btnDel;
+    public ImageButton btnOk;
+    public ImageButton btnRecList;
+    public boolean isRecording = false;
+    public boolean isPaused = false;
+    public ArrayList<Float> amplitudes;
+    public RecordForegroundService recordService = null;
+    public BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
 
-    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+    public Timer timer;
+    public String duration;
+    public AppDatabase db = null;
+    public TextView tvTimer;
+    public WaveformView waveformView;
+    public Vibrator vibrator;
+    public View bottomSheetBG;
+    public TextInputEditText fileNameInput;
+    public MaterialButton btnCancel;
+    public MaterialButton btnSave;
+    public ArrayList<AudioRecord> records;
 
-    private Timer timer;
-    private String duration;
-    private AppDatabase db = null;
-    private TextView tvTimer;
-    private WaveformView waveformView;
-    private Vibrator vibrator;
-    private View bottomSheetBG;
-    private TextInputEditText fileNameInput;
-    private MaterialButton btnCancel;
-    private MaterialButton btnSave;
-    private ArrayList<AudioRecord> records;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         records = new ArrayList<AudioRecord>();
         setContentView(R.layout.activity_main);
-        createNotificationChannel(this);
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 AppDatabase.class,
                 "audioRecords"
         ).build();
-
+        db = AppDatabase.getInstance(this);
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -108,12 +108,28 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
         btnSave = (MaterialButton) findViewById(R.id.btnSave);
         fetchAll();
+
+        Intent recordIntent = new Intent(this, RecordForegroundService.class);
+        bindService(recordIntent, this, BIND_AUTO_CREATE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(recordIntent);
+        } else {
+            startService(recordIntent);
+        }
+
+        Intent widgetIntent = new Intent(getBaseContext(), RecorderWidget.class);
+        widgetIntent.setAction("TIME_UPDATE");
+        widgetIntent.putExtra("message", "00:00");
+        getBaseContext().sendBroadcast(widgetIntent);
+
         btnRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isPaused) {
+                    recordService.resume();
                     resumeRec();
                 } else if (isRecording) {
+                    recordService.pause();
                     pauseRec();
                 } else {
                     startRec();
@@ -168,10 +184,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             //
             dismiss();
         });
-
     }
 
-    private void save() {
+    public void save() {
         String newFileName = fileNameInput.getText().toString();
 
         File oldFile = new File(path + fileName);
@@ -199,7 +214,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             }
         }
     }
-    private void fetchAll() {
+    public void fetchAll() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -208,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             }
         }).start();
     }
-    private void dismiss() {
+    public void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(fileNameInput);
 
@@ -217,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }, 500);
     }
 
-    private void hideKeyBoard(View v) {
+    public void hideKeyBoard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
@@ -231,17 +246,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         }
     }
 
-    private void startRec() {
+    public void startRec() {
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
         }
-
-        recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-
         if (getExternalFilesDir(null) != null) {
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
@@ -249,23 +258,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
+        recordService.start(path, fileName);
 
-        try {
-            recorder.setOutputFile(new FileOutputStream(path + fileName).getFD());
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        try {
-            recorder.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("NOTI HEREEEEEEEEEEEEEEEE");
-        showNotification(this, "Acade.mic", "Audio started recording");
-        recorder.start();
         isRecording = true;
         isPaused = false;
         timer.start();
@@ -280,8 +274,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnOk.setVisibility(View.VISIBLE);
     }
 
-    private void resumeRec() {
-        recorder.resume();
+    public void resumeRec() {
+        recordService.resume();
         isPaused = false;
         timer.start();
         // change the button
@@ -289,8 +283,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
     }
 
-    private void pauseRec() {
-        recorder.pause();
+    public void pauseRec() {
+        recordService.pause();
         isPaused = true;
         timer.pause();
         // change the button
@@ -298,12 +292,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
     }
 
-    private void stopRec() {
+    public void stopRec() {
         timer.stop();
 
-        recorder.stop();
-        recorder.release();
-        recorder = null;
+        recordService.stop();
         isPaused = false;
         isRecording = false;
 
@@ -318,79 +310,30 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
 
-    public static void createNotificationChannel(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "My Channel";
-            String description = "This is my channel";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
-
-    public void showNotification(Context context, String title, String content) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_pause)
-                .setContentTitle(title)
-                .setContentText(content)
-                .setSound(null)
-                .setSilent(true)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .setOngoing(true);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
-            return;
-        }
-
-        Intent intent = new Intent(this, MainActivity.class);
-        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT| PendingIntent.FLAG_IMMUTABLE);
-        builder.setContentIntent(pi);
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(0, builder.build());
-    }
-
-    public void updateNotification(Context context, String updatedContent) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_pause)
-                .setContentTitle("Acade.mic")
-                .setSound(null)
-                .setSilent(true)
-                .setContentText(updatedContent)
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
-                .setOngoing(true);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTI_REQUEST_CODE);
-            return;
-        }
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setAction("PLAY_PAUSE_ACTION");
-        PendingIntent pi = PendingIntent.getActivity(this,0,intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        builder.setContentIntent(pi);
-
-        Intent buttonIntent = new Intent(context, MainActivity.class);
-        PendingIntent buttonPendingIntent = PendingIntent.getActivity(context, 0, buttonIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        builder.addAction(R.drawable.ic_play, "Play", buttonPendingIntent);
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(NOTIFICATION_ID, builder.build());
-    }
 
 
     @Override
     public void onTimerTick(String duration) {
-        updateNotification(this, duration);
+
         tvTimer.setText(duration);
         this.duration = duration.substring(0, duration.length() - 3);
-        waveformView.addAmplitude((float) recorder.getMaxAmplitude());
+        waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
     }
+
+    boolean mBound = false;
+
+    @Override
+    public void onServiceConnected(ComponentName className,
+                                   IBinder service) {
+        RecordForegroundService.LocalBinder binder = (RecordForegroundService.LocalBinder) service;
+        recordService = binder.getService();
+        mBound = true;
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        boolean mBound = false;
+        recordService = null;
+    }
+
 }

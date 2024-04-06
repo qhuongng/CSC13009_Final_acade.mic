@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">acade.mic</string>
+    <string name="appwidget_text">Acade.mic</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">Acade.mic quick app access</string>
 </resources>
