@@ -1,24 +1,33 @@
 package com.example.acade_mic;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHolder> {
 
     private ArrayList<Bookmark> bookmarks;
     private OnItemClickListener listener;
+    private Context bContext;
+    private AppDatabase db;
 
-    public BookmarkAdapter(ArrayList<Bookmark> list, OnItemClickListener listener){
+    public BookmarkAdapter(ArrayList<Bookmark> list, OnItemClickListener listener, Context context){
         this.bookmarks = list;
         this.listener = listener;
+        this.bContext = context;
     }
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,View.OnLongClickListener {
 
@@ -69,13 +78,16 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
             // Set data to views here
             int index = position + 1;
             holder.index.setText(String.valueOf(index));
-            holder.positionMark.setText(bookmark.getPosition());
+            String pos = dateFormat(bookmark.getPosition());
+            holder.positionMark.setText(pos);
             holder.setDeleteButtonClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int adapterPosition = holder.getAdapterPosition();
                     if (adapterPosition != RecyclerView.NO_POSITION) {
-                        deleteBookmark(adapterPosition);
+                        Bookmark del = bookmarks.get(adapterPosition);
+
+                        deleteBookmark(del);
                     }
                 }
             });
@@ -87,11 +99,34 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
     public int getItemCount() {
         return bookmarks.size();
     }
-    public void deleteBookmark(int position) {
-        if (position >= 0 && position < bookmarks.size()) {
-            bookmarks.remove(position);
-            notifyItemRemoved(position);
-            notifyItemRangeChanged(position, bookmarks.size());
+    private Executor executor = Executors.newSingleThreadExecutor();
+    public void deleteBookmark(Bookmark delBookmark) {
+
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    AppDatabase db = AppDatabase.getInstance(bContext);
+
+                    db.bookmarkDao().delete(delBookmark.getAudioId(), delBookmark.getPosition());
+                }
+            });
+
+           bookmarks.remove(delBookmark);
+           notifyDataSetChanged();
+
+
+    }
+    public String dateFormat(int duration) {
+        int d = duration / 1000;
+        int s = d % 60;
+        int m = (d / 60) % 60;
+        int h = (d - m * 60) / 360;
+
+        NumberFormat f = new DecimalFormat("00");
+        String str = m + ":" + f.format(s);
+        if (h > 0) {
+            str = h + ":" + str;
         }
+        return str;
     }
 }

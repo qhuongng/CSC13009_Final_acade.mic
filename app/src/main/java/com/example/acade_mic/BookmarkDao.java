@@ -16,8 +16,12 @@ public interface BookmarkDao {
     @Insert
     void insert(Bookmark...bookmarks);
 
-    @Delete
-    void delete(Bookmark bookmark);
+
+    @Query("Delete from bookMarks where audioId = :audioId and position = :position")
+    void delete(int audioId, int position);
+    @Query("DELETE from bookMarks where audioId = :audioId")
+    void deleteBookmarksByRecordId(int audioId);
+
 
     @Update
     void update(Bookmark bookmark);
