@@ -20,13 +20,19 @@ import java.sql.SQLOutput;
  * Implementation of App Widget functionality.
  */
 public class RecorderWidget extends AppWidgetProvider {
-    public static String PLAY_BUTTON = "PLAY_BUTTON";
+    public static final String PLAY_BUTTON = "PLAY_BUTTON";
+    public static final String TIME_UPDATE = "TIME_UPDATE";
+    public static final String PLAY_BUTTON_SWITCH = "PLAY_BUTTON_SWITCH";
+    public static final String PAUSE_BUTTON = "PAUSE_BUTTON";
+    public static final String PAUSE_BUTTON_SWITCH = "PAUSE_BUTTON_SWITCH";
+    public static final String TIME_PAUSED = "TIME_PAUSED";
+
 
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         switch (intent.getAction()) {
-            case "TIME_UPDATE":
+            case TIME_UPDATE:
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 String message = intent.getStringExtra("message");
                 if (message.equals("00:00")) {
@@ -38,7 +44,7 @@ public class RecorderWidget extends AppWidgetProvider {
                 AppWidgetManager.getInstance(context).updateAppWidget(
                         new ComponentName(context, RecorderWidget.class), views);
                 break;
-            case "PLAY_BUTTON":
+            case PLAY_BUTTON:
                 Intent recordIntent = new Intent(context.getApplicationContext(), RecordForegroundService.class);
                 recordIntent.putExtra("message", "PLAY");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -47,21 +53,21 @@ public class RecorderWidget extends AppWidgetProvider {
                     context.getApplicationContext().startService(recordIntent);
                 }
                 break;
-            case "PLAY_BUTTON_SWITCH":
+            case PLAY_BUTTON_SWITCH:
                 RemoteViews views5 = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 views5.setViewVisibility(R.id.widget_pause_btn, View.VISIBLE);
                 views5.setViewVisibility(R.id.widget_play_btn, View.GONE);
                 AppWidgetManager.getInstance(context).updateAppWidget(
                         new ComponentName(context, RecorderWidget.class), views5);
                 break;
-            case "PAUSE_BUTTON_SWITCH":
+            case PAUSE_BUTTON_SWITCH:
                 RemoteViews views6 = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 views6.setViewVisibility(R.id.widget_pause_btn, View.GONE);
                 views6.setViewVisibility(R.id.widget_play_btn, View.VISIBLE);
                 AppWidgetManager.getInstance(context).updateAppWidget(
                         new ComponentName(context, RecorderWidget.class), views6);
                 break;
-            case "PAUSE_BUTTON":
+            case PAUSE_BUTTON:
                 Intent recordIntent2 = new Intent(context.getApplicationContext(), RecordForegroundService.class);
                 recordIntent2.putExtra("message", "PAUSE");
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -70,7 +76,7 @@ public class RecorderWidget extends AppWidgetProvider {
                     context.getApplicationContext().startService(recordIntent2);
                 }
                 break;
-            case "TIME_PAUSED":
+            case TIME_PAUSED:
                 RemoteViews views2 = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
                 String message2 = intent.getStringExtra("message");
                 views2.setTextViewText(R.id.status, "PAUSED");
