@@ -87,11 +87,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
         records = new ArrayList<>();
 
-        db = Room.databaseBuilder(
-                this,
-                AppDatabase.class,
-                "audioRecords"
-        ).build();
+        db = AppDatabase.getInstance(this);
 
         mAdapter = new Adapter(records, this);
 
@@ -166,6 +162,9 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                             @Override
                             public void run() {
                                 db.audioRecordDao().delete(toDelete);
+                                for(AudioRecord ar : toDelete){
+                                    db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
+                                }
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -398,6 +397,9 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 Intent intent = new Intent(this, AudioPlayerActivity.class);
                 intent.putExtra("filepath", audioRecord.getFilePath());
                 intent.putExtra("filename", audioRecord.getFilename());
+
+                intent.putExtra("id", audioRecord.getId());
+
                 startActivity(intent);
             }
         }catch(Exception exception){
