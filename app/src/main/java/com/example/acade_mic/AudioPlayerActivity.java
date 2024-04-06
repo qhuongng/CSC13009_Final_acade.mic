@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 
 public class AudioPlayerActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
@@ -42,13 +44,19 @@ public class AudioPlayerActivity extends AppCompatActivity {
     private ImageButton btnPlay;
     private ImageButton btnBackward;
     private ImageButton btnForward;
+    private ImageButton btnBookMark;
+    private ImageButton btnLoop;
     private Chip speedChip;
     private SeekBar seekBar;
     private Runnable runnable;
     private Handler handler;
+    private boolean checkLoop;
+    private ArrayList<Bookmark> bookmarks;
+    private AppDatabase db;
+
 
     private final long delay = 100L;
-    private final int jumvalue = 1000;
+    private final int jumvalue = 5000;
     private float playBackSpeed = 1.0f;
 
     @Override
@@ -71,12 +79,13 @@ public class AudioPlayerActivity extends AppCompatActivity {
         }
         return str;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
         mediaPlayer = new MediaPlayer();
-
+        bookmarks = new ArrayList<Bookmark>();
         String filePath = getIntent().getStringExtra("filepath");
         String fileName = getIntent().getStringExtra("filename");
 
@@ -86,6 +95,8 @@ public class AudioPlayerActivity extends AppCompatActivity {
         tvTrackDuration = findViewById(R.id.tvTrackDuration);
         btnBackward = findViewById(R.id.btnBackward);
         btnForward = findViewById(R.id.btnForward);
+        btnBookMark = findViewById(R.id.btnBookmark);
+        btnLoop = findViewById(R.id.btnLoop);
         btnPlay = findViewById(R.id.btnPlay);
         speedChip = findViewById(R.id.chip);
         seekBar = findViewById(R.id.seekBar);
@@ -135,8 +146,15 @@ public class AudioPlayerActivity extends AppCompatActivity {
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
-                handler.removeCallbacks(runnable);
+                if(!checkLoop){
+                    btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
+                    handler.removeCallbacks(runnable);
+                } else {
+                    mediaPlayer.seekTo(0);
+                    mediaPlayer.start();
+                    handler.postDelayed(runnable, delay);
+                }
+
             }
         });
         //tua thêm
@@ -190,6 +208,18 @@ public class AudioPlayerActivity extends AppCompatActivity {
                     mediaPlayer.pause();
                     btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
                     handler.removeCallbacks(runnable);
+                }
+            }
+        });
+        btnLoop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!checkLoop){
+                    checkLoop = true;
+                    btnLoop.setImageResource(R.drawable.ic_noloop);
+                } else{
+                    checkLoop = false;
+                    btnLoop.setImageResource(R.drawable.ic_loop);
                 }
             }
         });

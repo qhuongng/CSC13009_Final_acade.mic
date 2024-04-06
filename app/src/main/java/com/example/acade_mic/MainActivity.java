@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 AppDatabase.class,
                 "audioRecords"
         ).build();
+        db = AppDatabase.getInstance(this);
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
