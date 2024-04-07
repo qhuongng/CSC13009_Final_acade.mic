@@ -35,21 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.longrunning.OperationFuture;
-import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.cloud.speech.v1p1beta1.LongRunningRecognizeMetadata;
-import com.google.cloud.speech.v1p1beta1.LongRunningRecognizeResponse;
-import com.google.cloud.speech.v1p1beta1.RecognitionAudio;
-import com.google.cloud.speech.v1p1beta1.RecognitionConfig;
-import com.google.cloud.speech.v1p1beta1.RecognitionConfig.AudioEncoding;
-import com.google.cloud.speech.v1p1beta1.RecognizeResponse;
-import com.google.cloud.speech.v1p1beta1.SpeechClient;
-import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
-import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
-import com.google.cloud.speech.v1p1beta1.SpeechSettings;
-import com.google.protobuf.ByteString;
 
 public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
     private MediaPlayer mediaPlayer;
