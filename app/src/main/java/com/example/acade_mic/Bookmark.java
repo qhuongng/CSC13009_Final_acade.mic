@@ -10,10 +10,10 @@ public class Bookmark {
     private String note;
 
     public Bookmark(){}
-    public Bookmark(int audioId,int position){
+    public Bookmark(int audioId,int position, String note){
         this.audioId = audioId;
         this.position = position;
-        this.note = "";
+        this.note = note;
     }
 
     public int getAudioId() {

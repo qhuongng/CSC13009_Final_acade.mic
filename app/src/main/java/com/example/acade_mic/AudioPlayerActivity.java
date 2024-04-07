@@ -1,36 +1,28 @@
 package com.example.acade_mic;
 
-import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.graphics.ImageFormat;
+import android.content.DialogInterface;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -123,21 +115,81 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     if(dateFormat(bm.getPosition()).equals(dateFormat(mediaPlayer.getCurrentPosition()))) check++;
                 }
                 if(check == 0){
-                    Bookmark newBm = new Bookmark(id,mediaPlayer.getCurrentPosition());
-                    new Thread(new Runnable() {
+                    mediaPlayer.pause();
+                    // setup for note
+                    AlertDialog.Builder alertDialog = new AlertDialog.Builder(AudioPlayerActivity.this);
+                    View popupView = getLayoutInflater().inflate(R.layout.popup_insert_note, null);
+                    EditText editTextNote = popupView.findViewById(R.id.editTextNote);
+
+                    ImageButton saveBtn = popupView.findViewById(R.id.btnSaveNote);
+                    ImageButton cancelBtn = popupView.findViewById(R.id.btnCancel);
+                    alertDialog.setView(popupView);
+                    AlertDialog dialog = alertDialog.create();
+                    dialog.show();
+                    final boolean[] saveNote = {false};
+                    saveBtn.setOnClickListener(new View.OnClickListener() {
                         @Override
-                        public void run() {
-                            db.bookmarkDao().insert(newBm);
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    bookmarks.add(newBm);
-                                    bAdapter.notifyDataSetChanged();
-                                }
-                            });
+                        public void onClick(View v) {
+                            String note = editTextNote.getText().toString().trim();
+                            if(!note.isEmpty()){
+                                Bookmark newBm = new Bookmark(id,mediaPlayer.getCurrentPosition(), note);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.bookmarkDao().insert(newBm);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                bookmarks.add(newBm);
+                                                bAdapter.notifyDataSetChanged();
+                                                saveNote[0] = true;
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                    }
+                                }).start();
+                                recyclerView.smoothScrollToPosition(bookmarks.size());
+
+                                mediaPlayer.start();
+                            }  else {
+                            // Người dùng không nhập ghi chú, bạn có thể xử lý ở đây
+                            Toast.makeText(AudioPlayerActivity.this, "Please enter a note", Toast.LENGTH_SHORT).show();
+                                mediaPlayer.start();
+                            }
                         }
-                    }).start();
-                    recyclerView.smoothScrollToPosition(bookmarks.size());
+                    });
+                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            String note = editTextNote.getText().toString().trim();
+                            if (!note.isEmpty() && !saveNote[0]) {
+                                Bookmark newBm = new Bookmark(id, mediaPlayer.getCurrentPosition(),note);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.bookmarkDao().insert(newBm);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                bookmarks.add(newBm);
+                                                bAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+                                    }
+                                }).start();
+                                recyclerView.smoothScrollToPosition(bookmarks.size());
+                            }
+                            mediaPlayer.start();
+                        }
+                    });
+                    cancelBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            dialog.dismiss(); // Đóng dialog mà không lưu ghi chú
+                            mediaPlayer.start();
+                        }
+                    });
+                    //
                 }
             }
         });
@@ -290,7 +342,23 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
     @Override
     public void onItemLongClickListener(int position) {
-
+        Bookmark bookmark = bookmarks.get(position);
+        mediaPlayer.seekTo(bookmark.getPosition());
+        if(mediaPlayer.isPlaying()) mediaPlayer.pause();
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(AudioPlayerActivity.this);
+        View popupView = getLayoutInflater().inflate(R.layout.show_note, null);
+        TextView textNote = popupView.findViewById(R.id.noteTV);
+        textNote.setText(bookmark.getNote());
+        alertDialog.setView(popupView);
+        AlertDialog dialog = alertDialog.create();
+        dialog.show();
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                dialog.dismiss();
+                mediaPlayer.start();
+            }
+        });
     }
     private void fetchAll(int id) {
         new Thread(new Runnable() {

@@ -158,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel = (ImageButton) findViewById(R.id.btnDel);
         btnDel.setOnClickListener((View v) -> {
             stopRec();
-            Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Delete record complete", Toast.LENGTH_SHORT).show();
         });
 
         btnOk = (ImageButton) findViewById(R.id.btnOk);
