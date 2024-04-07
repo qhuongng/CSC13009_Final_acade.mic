@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import kotlinx.coroutines.GlobalScope;
@@ -56,6 +57,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private ImageButton btnShare;
     private TextView tvRename;
     private TextView tvDelete;
+    private TextView tvShare;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +83,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
         tvRename = findViewById(R.id.tvEdit);
         tvDelete = findViewById(R.id.tvDelete);
+        tvShare = findViewById(R.id.tvShare);
 
 
         editbar = findViewById(R.id.editBar);
@@ -147,11 +150,14 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<AudioRecord> selectedRecords = records.stream().filter(record -> record.isChecked()).collect(Collectors.toList());
-                if(selectedRecords.size() > 1){
-                    Toast.makeText(getApplicationContext(), "CANNOT SHARE MULTIPLE RECORDS", Toast.LENGTH_SHORT).show();
-                }else{
-                    AudioRecord toBeShared = selectedRecords.get(0);
+                AudioRecord toBeShared = null;
+                for (AudioRecord r : records) {
+                    if (r.isChecked()) {
+                        toBeShared = r;
+                        break;
+                    }
+                }
+                if(toBeShared != null){
                     File file = new File(toBeShared.getFilePath());
                     Uri uri = FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getApplicationContext().getPackageName() + ".provider", file);
 
@@ -341,18 +347,28 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-
+    private void disableShare(){
+        btnShare.setClickable(false);
+        btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+    }
     private void enableRename() {
         btnRename.setClickable(true);
         btnRename.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
         tvRename.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
-
     private void enableDelete() {
         btnDelete.setClickable(true);
         btnDelete.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+    private void enableShare() {
+        btnShare.setClickable(true);
+        btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+    }
+
+
 
     private void searchDatabase(String query) {
         new Thread(new Runnable() {
@@ -410,21 +426,23 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     case 0:
                         disableRename();
                         disableDelete();
+                        disableShare();
                         break;
                     case 1:
                         enableDelete();
                         enableRename();
+                        enableShare();
                         break;
                     default:
                         disableRename();
                         enableDelete();
+                        disableShare();
                 }
 
             } else {
                 Intent intent = new Intent(this, AudioPlayerActivity.class);
                 intent.putExtra("filepath", audioRecord.getFilePath());
                 intent.putExtra("filename", audioRecord.getFilename());
-
                 intent.putExtra("id", audioRecord.getId());
 
                 startActivity(intent);
@@ -450,6 +468,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             editbar.setVisibility(View.VISIBLE);
             enableDelete();
             enableRename();
+            enableShare();
         }
     }
 }
