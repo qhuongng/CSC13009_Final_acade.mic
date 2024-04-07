@@ -26,17 +26,40 @@ import com.google.android.material.chip.Chip;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
-public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener {
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.speech.v1p1beta1.LongRunningRecognizeMetadata;
+import com.google.cloud.speech.v1p1beta1.LongRunningRecognizeResponse;
+import com.google.cloud.speech.v1p1beta1.RecognitionAudio;
+import com.google.cloud.speech.v1p1beta1.RecognitionConfig;
+import com.google.cloud.speech.v1p1beta1.RecognitionConfig.AudioEncoding;
+import com.google.cloud.speech.v1p1beta1.RecognizeResponse;
+import com.google.cloud.speech.v1p1beta1.SpeechClient;
+import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
+import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
+import com.google.cloud.speech.v1p1beta1.SpeechSettings;
+import com.google.protobuf.ByteString;
+
+public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
     private MediaPlayer mediaPlayer;
     private MaterialToolbar toolbar;
     private TextView tvFilename;
     private TextView tvTrackProgress;
     private TextView tvTrackDuration;
+    private TextView transcriptTxt;
+
+    private ImageButton btnTranscribe;
     private ImageButton btnPlay;
     private ImageButton btnBackward;
     private ImageButton btnForward;
@@ -50,6 +73,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private AppDatabase db;
     private BookmarkAdapter bAdapter;
     ImageButton flatBtn;
+
+    private SpeechCredentialsProvider credentialsProvider;
 
     private final long delay = 100L;
     private final int jumvalue = 5000;
@@ -80,6 +105,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
+
+        credentialsProvider = new SpeechCredentialsProvider(this);
+
         mediaPlayer = new MediaPlayer();
         bookmarks = new ArrayList<Bookmark>();
         String filePath = getIntent().getStringExtra("filepath");
@@ -97,6 +125,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         btnPlay = findViewById(R.id.btnPlay);
         speedChip = findViewById(R.id.chip);
         seekBar = findViewById(R.id.seekBar);
+
+        btnTranscribe = findViewById(R.id.btnTranscribe);
+        transcriptTxt = findViewById(R.id.transcriptTxt);
 
         bookmarks = new ArrayList<>();
         db = AppDatabase.getInstance(this);
@@ -285,8 +316,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     mediaPlayer.seekTo(progress);
                     mediaPlayer.start();
                 }
-
-
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -319,6 +348,29 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 }
             }
         });
+
+        btnTranscribe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                transcriptTxt.setText("Transcribing audio...");
+                transcribeAudio(filePath);
+            }
+        });
+    }
+
+    public void transcribeAudio(String filePath) {
+        new AsyncAudioTranscriptor(credentialsProvider, this).execute(filePath);
+    }
+
+    @Override
+    public void onTranscriptionCompleted(String transcript) {
+        // Update UI with the transcript
+        transcriptTxt.setText(transcript);
+    }
+
+    @Override
+    public void onTranscriptionFailed() {
+        Toast.makeText(this, "Error transcribing file", Toast.LENGTH_SHORT).show();
     }
 
     @Override
