@@ -57,11 +57,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public final int REQUEST_CODE = 200;
     public final int REQUEST_CODE2 = 201;
     public final int REQUEST_CODE3 = 202;
+    public final int REQUEST_CODE4 = 203;
 
 
     public static boolean permissionGranted;
     public static boolean permissionGranted2;
     public static boolean permissionGranted3;
+    public static boolean permissionGranted4;
 
     public ImageButton btnRec;
     public ImageButton btnDel;
@@ -122,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
         permissionGranted2 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED;
         permissionGranted3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_MICROPHONE) == PackageManager.PERMISSION_GRANTED;
+        permissionGranted4 = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
@@ -133,6 +136,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         if (!permissionGranted3) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE_MICROPHONE}, REQUEST_CODE3);
+        }
+
+        if (!permissionGranted4) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, REQUEST_CODE4);
         }
 
 

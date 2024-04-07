@@ -14,20 +14,82 @@
         app:title=" ">
         <TextView
             android:id="@+id/tvFilename"
-            android:textSize="20sp"
+            android:textSize="16sp"
             android:gravity="center"
             android:layout_marginEnd="46dp"
             android:layout_width="match_parent"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:layout_height="wrap_content"/>
     </com.google.android.material.appbar.MaterialToolbar>
+
+    <LinearLayout
+        android:id="@+id/transcriptView"
+        android:layout_width="290dp"
+        android:layout_height="302dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/bookmarkRecyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolBar">
+        <LinearLayout
+            android:background="#ECECEC"
+            android:layout_height="50dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:layout_width="match_parent">
+            <ImageButton
+                android:id="@+id/btnTranscribe"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_ai_captions" />
+
+            <ImageButton
+                android:id="@+id/btnShareTranscript"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="20dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_search" />
+
+            <ImageButton
+                android:id="@+id/btnTranslateTranscript"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="10dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_search" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/transcriptTxt"
+                android:padding="20dp"
+                android:layout_width="match_parent"
+                android:text="Generated captions will show up here."
+                android:layout_height="wrap_content"
+                android:textColor="@color/textColor"
+                android:textSize="16sp" />
+
+        </ScrollView>
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/bookmarkRecyclerView"
-        android:layout_width="200dp"
-        android:layout_height="300dp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_width="289dp"
+        android:layout_height="119dp"
+        app:layout_constraintBottom_toTopOf="@id/chip"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolBar"
-        app:layout_constraintBottom_toTopOf="@id/chip"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/transcriptView"
+        app:layout_constraintVertical_bias="0.961" />
+
     <com.google.android.material.chip.Chip
         android:id="@+id/chip"
         android:layout_width="62dp"
