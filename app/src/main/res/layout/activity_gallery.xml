@@ -113,6 +113,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:layout_marginEnd="90dp"
             android:gravity="center">
             <ImageButton
                 android:id="@+id/btnEdit"
@@ -124,6 +125,27 @@
                 />
             <TextView
                 android:id="@+id/tvEdit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
+                android:text="Rename"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+            <ImageButton
+                android:id="@+id/btnEditAudio"
+                android:clickable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/disabledDarkGray"
+                android:background="@drawable/ic_round_edit"
+                />
+            <TextView
+                android:id="@+id/tvEditAudio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/disabledDarkGray"
