@@ -32,6 +32,7 @@
         android:id="@+id/editTextNote"
         android:layout_width="match_parent"
         android:layout_height="147dp"
+        android:paddingStart="8dp"
         android:hint="Enter your note here"
 
         android:selectAllOnFocus="true" />
