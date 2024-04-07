@@ -43,7 +43,7 @@
         <receiver
             android:name=".RecorderWidget"
             android:exported="false">
-            <intent-filter android:priority="200">
+            <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.example.acade_mic.RecorderWidget.TIME_PAUSED" />
                 <action android:name="com.example.acade_mic.RecorderWidget.TIME_UPDATE" />
