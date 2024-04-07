@@ -95,13 +95,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if(recordService != null && recordService.isRecording && recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD PAUSE");
             pauseRec(FROM_WIDGET);
             syncPauseTime();
         }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD RESUME");
             resumeRec(FROM_WIDGET);
         }
     }
@@ -231,6 +229,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
+        Button schedulerBtn = (Button) findViewById(R.id.schedulerBtn);
+        schedulerBtn.setOnClickListener((View v)->{
+            Intent startSchedulerIntent = new Intent(this, AlarmActivity.class);
+            startActivity(startSchedulerIntent);
+        });
     }
 
     public void save() {
@@ -353,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public void stopRec() {
         timer.stop();
 
-        recordService.stop();
+        recordService.stop(false);
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -377,6 +380,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             tvTimer.setText(recordService.currentTime);
             this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
             waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        }else{
+            tvTimer.setText("00:00.00");
         }
     }
 

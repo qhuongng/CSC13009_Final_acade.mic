@@ -13,10 +13,14 @@ import android.media.MediaRecorder;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.room.Room;
+
+import com.example.acade_mic.model.Alarm;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -29,8 +33,8 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     private static final String CHANNEL_ID = "myChannel";
     private static final int NOTIFICATION_ID = 169;
     private static final int NOTI_REQUEST_CODE = 269;
-    public String filePath;
     public MediaRecorder recorder;
+
     public String path = "";
     public String fileName = "";
     public Timer timer;
@@ -50,6 +54,10 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
 
     long totalPauseTime = 0;
 
+    public long AlarmStopRecordingMillis = 0;
+
+    public boolean isAlarmRecording = false;
+
     public String format(long duration) {
         long millis = duration % 1000;
         long seconds = (duration / 1000) % 60;
@@ -68,10 +76,14 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
     @Override
     public void onTimerTick(String duration) {
         if(isRecording && !isPaused){
-            totalTimeMillis = System.currentTimeMillis() - startTimeMillis - totalPauseTime;
+            long currentTimeMillis = System.currentTimeMillis();
+            totalTimeMillis = currentTimeMillis - startTimeMillis - totalPauseTime;
             duration = format(totalTimeMillis);
             currentTime = duration;
             updateNotification(this, duration.split("//.")[0]);
+            if(isAlarmRecording && currentTimeMillis >= AlarmStopRecordingMillis){
+                stop(true);
+            }
         }
     }
 
@@ -101,6 +113,16 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         if (intent != null && intent.getStringExtra("message") != null && intent.getStringExtra("message").equals("PAUSE")) {
             pause();
             System.out.println("PAUSE HERE");
+        }
+        if(intent != null && intent.getAction() != null && intent.getAction().equals("START_ALARM")){
+            long totalDuration = intent.getLongExtra("totalDuration", 0L);
+            System.out.println("ALARM START and ends in: " + totalDuration);
+            if(isRecording == true){
+                stop(false);
+            }
+            AlarmStopRecordingMillis = totalDuration + System.currentTimeMillis();
+            isAlarmRecording = true;
+            start();
         }
         return START_STICKY;
     }
@@ -257,6 +279,9 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
+        if(isAlarmRecording){
+            fileName = "alarm_" + fileName;
+        }
         isRecording = true;
         isPaused = false;
 
@@ -311,7 +336,7 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         getBaseContext().sendBroadcast(intent);
     }
 
-    public void stop() {
+    public void stop(boolean isAlarm) {
         isPaused = false;
         isRecording = false;
         totalTimeMillis = 0;
@@ -329,5 +354,22 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         recorder = null;
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancelAll();
+        if(isAlarm){
+            AppDatabase db = Room.databaseBuilder(
+                    getApplicationContext(),
+                    AppDatabase.class,
+                    "audioRecords"
+            ).build();
+
+            AudioRecord record = new AudioRecord("alarm_" + fileName, path + fileName,new Date().getTime(), currentTime, path + fileName);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    db.audioRecordDao().insert(record);
+                }
+            }).start();
+            isAlarmRecording = false;
+            AlarmStopRecordingMillis = 0;
+        }
     }
 }

@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.WRITE_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -26,6 +26,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Academic"
         tools:targetApi="31">
+        <activity
+            android:name=".AlarmActivity"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -35,18 +39,18 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
         <receiver
             android:name=".RecorderWidget"
             android:exported="false">
-            <intent-filter>
+            <intent-filter android:priority="200">
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="com.example.acade_mic.RecorderWidget.TIME_PAUSED"/>
-                <action android:name="com.example.acade_mic.RecorderWidget.TIME_UPDATE"/>
-                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON"/>
-                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON_SWITCH"/>
-                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON"/>
-                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON_SWITCH"/>
-
+                <action android:name="com.example.acade_mic.RecorderWidget.TIME_PAUSED" />
+                <action android:name="com.example.acade_mic.RecorderWidget.TIME_UPDATE" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON_SWITCH" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON_SWITCH" />
             </intent-filter>
 
             <meta-data
@@ -68,12 +72,15 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
+            android:enabled="true"
             android:name=".RecordForegroundService"
-            android:foregroundServiceType="microphone"/>
+            android:foregroundServiceType="microphone" />
     </application>
 
 </manifest>
