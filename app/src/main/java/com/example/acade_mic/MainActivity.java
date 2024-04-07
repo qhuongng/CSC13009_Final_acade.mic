@@ -97,6 +97,15 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     }
 
     @Override
+    protected void onDestroy() {
+        if (db.isOpen()) {
+            db.close();
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         records = new ArrayList<AudioRecord>();
