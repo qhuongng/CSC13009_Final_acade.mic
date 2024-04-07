@@ -68,12 +68,17 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <service
             android:name=".RecordForegroundService"
             android:foregroundServiceType="microphone"/>
+        <activity
+            android:name=".EditAudioActivity">
+        </activity>
+
     </application>
 
 </manifest>

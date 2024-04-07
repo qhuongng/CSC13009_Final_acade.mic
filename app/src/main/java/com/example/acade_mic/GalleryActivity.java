@@ -55,9 +55,12 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private ImageButton btnRename;
     private ImageButton btnDelete;
     private ImageButton btnShare;
+    private ImageButton btnEditAudio;
     private TextView tvRename;
     private TextView tvDelete;
     private TextView tvShare;
+    private TextView tvEditAudio;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,9 +84,11 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete = findViewById(R.id.btnDelete);
         btnShare = findViewById(R.id.btnShare);
 
+        btnEditAudio = findViewById(R.id.btnEditAudio);
         tvRename = findViewById(R.id.tvEdit);
         tvDelete = findViewById(R.id.tvDelete);
         tvShare = findViewById(R.id.tvShare);
+        tvEditAudio = findViewById(R.id.tvEditAudio);
 
 
         editbar = findViewById(R.id.editBar);
@@ -316,6 +321,32 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             }
         });
 
+        btnEditAudio.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Find the selected audio record
+                AudioRecord audioRecord = null;
+                for (AudioRecord record : records) {
+                    if (record.isChecked()) {
+                        audioRecord = record;
+                        break;
+                    }
+                }
+
+                // Check if any audio record is selected
+                if (audioRecord != null) {
+                    // Start EditAudioActivity with the file path and filename as extras
+                    Intent intent = new Intent(GalleryActivity.this, EditAudioActivity.class);
+                    intent.putExtra("filepath", audioRecord.getFilePath());
+                    intent.putExtra("filename", audioRecord.getFilename());
+                    startActivity(intent);
+                } else {
+                    // If no audio record is selected, display a message
+                    Toast.makeText(GalleryActivity.this, "No audio record selected", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
     }
     private void hideKeyBoard(View v){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -352,11 +383,17 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
+    private void disableEdit(){
+        btnEditAudio.setClickable(false);
+        btnEditAudio.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        tvEditAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+    }
     private void enableRename() {
         btnRename.setClickable(true);
         btnRename.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
         tvRename.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+
     private void enableDelete() {
         btnDelete.setClickable(true);
         btnDelete.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
@@ -367,6 +404,12 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+    private void enableEdit() {
+        btnEditAudio.setClickable(true);
+        btnEditAudio.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        tvEditAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+    }
+
 
 
 
@@ -427,16 +470,19 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         disableRename();
                         disableDelete();
                         disableShare();
+                        disableEdit();
                         break;
                     case 1:
                         enableDelete();
                         enableRename();
                         enableShare();
+                        enableEdit();
                         break;
                     default:
                         disableRename();
                         enableDelete();
                         disableShare();
+                        disableEdit();
                 }
 
             } else {
@@ -469,6 +515,9 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             enableDelete();
             enableRename();
             enableShare();
+            enableEdit();
         }
     }
+
+
 }
