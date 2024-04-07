@@ -8,4 +8,8 @@
         <item>20</item>
         <item>70</item>
     </string-array>
+
+    <string name="transcript_placeholder">Generated captions will show up here.</string>
+    <string name="transcript_executing">Transcribing audio…</string>
+    <string name="transcript_failure">There was an error transcribing the audio file. Please try again later.</string>
 </resources>

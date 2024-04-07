@@ -2,7 +2,6 @@ package com.example.acade_mic;
 
 import android.os.AsyncTask;
 
-import com.example.acade_mic.SpeechCredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.auth.oauth2.ServiceAccountCredentials;
@@ -19,6 +18,7 @@ import com.google.protobuf.ByteString;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -47,13 +47,20 @@ public class AsyncAudioTranscriptor extends AsyncTask<String, Void, String> {
                 byte[] data = Files.readAllBytes(path);
                 ByteString audioBytes = ByteString.copyFrom(data);
 
+                RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(audioBytes).build();
+
+                ArrayList<String> languageList = new ArrayList<>();
+                languageList.add("es-US");
+
                 RecognitionConfig config =
                         RecognitionConfig.newBuilder()
                                 .setEncoding(RecognitionConfig.AudioEncoding.MP3)
                                 .setSampleRateHertz(16000)
                                 .setLanguageCode("vi-VN")
+                                .addAllAlternativeLanguageCodes(languageList)
+                                .setEnableAutomaticPunctuation(true)
                                 .build();
-                RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(audioBytes).build();
+
 
                 // Performs speech recognition on the audio file
                 OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =
@@ -61,7 +68,7 @@ public class AsyncAudioTranscriptor extends AsyncTask<String, Void, String> {
 
                 while (!response.isDone()) {
                     System.out.println("Waiting for response...");
-                    Thread.sleep(10000);
+                    Thread.sleep(1000);
                 }
 
                 List<SpeechRecognitionResult> results = response.get().getResultsList();

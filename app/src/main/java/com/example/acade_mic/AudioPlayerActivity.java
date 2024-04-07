@@ -65,6 +65,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private final int jumvalue = 5000;
     private float playBackSpeed = 1.0f;
 
+    // audio file's id
+    private int id;
+
     @Override
     public void onBackPressed(){
         super.onBackPressed();
@@ -97,7 +100,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         bookmarks = new ArrayList<Bookmark>();
         String filePath = getIntent().getStringExtra("filepath");
         String fileName = getIntent().getStringExtra("filename");
-        int id =  getIntent().getIntExtra("id",0);
+        id =  getIntent().getIntExtra("id",0);
 
         //int id = Integer.parseInt();
         toolbar = findViewById(R.id.toolBar);
@@ -113,6 +116,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
         btnTranscribe = findViewById(R.id.btnTranscribe);
         transcriptTxt = findViewById(R.id.transcriptTxt);
+        fetchTranscript();
 
         bookmarks = new ArrayList<>();
         db = AppDatabase.getInstance(this);
@@ -337,8 +341,10 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         btnTranscribe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                transcriptTxt.setText("Transcribing audio...");
-                transcribeAudio(filePath);
+                if (!transcriptTxt.getText().equals(String.valueOf(R.string.transcript_placeholder))) {
+                    transcriptTxt.setText(R.string.transcript_executing);
+                    transcribeAudio(filePath);
+                }
             }
         });
     }
@@ -351,11 +357,20 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     public void onTranscriptionCompleted(String transcript) {
         // Update UI with the transcript
         transcriptTxt.setText(transcript);
+
+        // save the transcript to the database for future reference
+        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                db.transcriptionFileDao().insert(newTranscript);
+            }
+        }).start();
     }
 
     @Override
     public void onTranscriptionFailed() {
-        Toast.makeText(this, "Error transcribing file", Toast.LENGTH_SHORT).show();
+        transcriptTxt.setText(R.string.transcript_failure);
     }
 
     @Override
@@ -411,6 +426,22 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                         bAdapter.notifyDataSetChanged();
                     }
                 });
+            }
+        }).start();
+    }
+
+    private void fetchTranscript() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id);
+
+                if (queryResult != null) {
+                    transcriptTxt.setText(queryResult.getContent());
+                }
+                else {
+                    transcriptTxt.setText(R.string.transcript_placeholder);
+                }
             }
         }).start();
     }
