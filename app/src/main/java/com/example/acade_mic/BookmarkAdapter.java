@@ -80,6 +80,7 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.ViewHo
             holder.index.setText(String.valueOf(index));
             String pos = dateFormat(bookmark.getPosition());
             holder.positionMark.setText(pos);
+            holder.itemView.setTooltipText(bookmark.getNote());
             holder.setDeleteButtonClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

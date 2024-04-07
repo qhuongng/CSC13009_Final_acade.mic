@@ -3,6 +3,7 @@ package com.example.acade_mic;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -11,6 +12,7 @@ import androidx.room.Room;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import kotlinx.coroutines.GlobalScope;
 
@@ -50,6 +53,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private boolean allChecked = false;
     private ImageButton btnRename;
     private ImageButton btnDelete;
+    private ImageButton btnShare;
     private TextView tvRename;
     private TextView tvDelete;
     @Override
@@ -73,6 +77,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
         btnRename = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
+        btnShare = findViewById(R.id.btnShare);
+
         tvRename = findViewById(R.id.tvEdit);
         tvDelete = findViewById(R.id.tvDelete);
 
@@ -134,6 +140,27 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 }else {
                     disableRename();
                     disableDelete();
+                }
+            }
+        });
+
+        btnShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<AudioRecord> selectedRecords = records.stream().filter(record -> record.isChecked()).collect(Collectors.toList());
+                if(selectedRecords.size() > 1){
+                    Toast.makeText(getApplicationContext(), "CANNOT SHARE MULTIPLE RECORDS", Toast.LENGTH_SHORT).show();
+                }else{
+                    AudioRecord toBeShared = selectedRecords.get(0);
+                    File file = new File(toBeShared.getFilePath());
+                    Uri uri = FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getApplicationContext().getPackageName() + ".provider", file);
+
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("audio/*");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivity(Intent.createChooser(shareIntent, "Share via"));
                 }
             }
         });
