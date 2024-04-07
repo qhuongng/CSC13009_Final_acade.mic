@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         timer.pause();
         // change the button
         btnRec.setImageResource(R.drawable.ic_rec);
-        btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
+        btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
     }
 
     public void stopRec() {
@@ -361,6 +361,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel.setClickable(false);
 
         btnRec.setImageResource(R.drawable.ic_rec);
+        btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
         tvTimer.setText("00:00:00");
         amplitudes = waveformView.clear();
     }

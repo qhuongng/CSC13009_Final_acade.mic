@@ -8,9 +8,9 @@ public class TranscriptionFile {
     private String content;
 
     public TranscriptionFile(){}
-    public TranscriptionFile(int audioId,int position){
+    public TranscriptionFile(int audioId, String content){
         this.audioId = audioId;
-        this.content = "";
+        this.content = content;
     }
 
     public int getAudioId() {

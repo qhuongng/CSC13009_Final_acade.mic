@@ -10,8 +10,8 @@ import java.util.List;
 
 @Dao
 public interface TranscriptionFileDao {
-    @Query("SELECT * FROM transcriptionFiles WHERE audioId = :audioId")
-    List<TranscriptionFile> getTranscript(int audioId);
+    @Query("SELECT * FROM transcriptionFiles WHERE audioId = :audioId LIMIT 1")
+    TranscriptionFile getTranscript(int audioId);
 
     @Insert
     void insert(TranscriptionFile...transcript);
