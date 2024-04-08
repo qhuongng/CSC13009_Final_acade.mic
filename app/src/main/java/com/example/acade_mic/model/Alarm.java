@@ -28,6 +28,14 @@ public class Alarm {
         this.endTimeMillis = endTimeMillis;
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
     public Alarm(long startTimeMillis, long endTimeMillis) {
         this.startTimeMillis = startTimeMillis;
         this.endTimeMillis = endTimeMillis;

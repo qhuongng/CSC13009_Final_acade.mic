@@ -6,10 +6,14 @@ import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {AudioRecord.class, Bookmark.class, TranscriptionFile.class}, version = 3,exportSchema = false)
+import com.example.acade_mic.dao.AlarmDao;
+import com.example.acade_mic.model.Alarm;
+
+@Database(entities = {AudioRecord.class, Bookmark.class, TranscriptionFile.class, Alarm.class}, version = 4,exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AudioRecordDao audioRecordDao();
     public abstract BookmarkDao bookmarkDao();
+    public abstract AlarmDao alarmDao();
     public  abstract TranscriptionFileDao transcriptionFileDao();
 
     private static volatile AppDatabase INSTANCE;

@@ -1,6 +1,7 @@
 package com.example.acade_mic.dao;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 
@@ -17,4 +18,9 @@ public interface AlarmDao {
 
     @Insert
     void insert(Alarm...alarms);
+
+    @Delete
+    void delete(List<Alarm> alarms);
+    @Delete
+    void delete(Alarm alarm);
 }
