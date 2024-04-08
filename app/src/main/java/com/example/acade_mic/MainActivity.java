@@ -1,14 +1,9 @@
 package com.example.acade_mic;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -19,12 +14,9 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.View;
-import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,10 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.room.Room;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -43,10 +32,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,13 +42,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public final int REQUEST_CODE = 200;
     public final int REQUEST_CODE2 = 201;
     public final int REQUEST_CODE3 = 202;
-    public final int REQUEST_CODE4 = 203;
-
 
     public static boolean permissionGranted;
     public static boolean permissionGranted2;
     public static boolean permissionGranted3;
-    public static boolean permissionGranted4;
 
     public ImageButton btnRec;
     public ImageButton btnDel;
@@ -124,7 +106,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
         permissionGranted2 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED;
         permissionGranted3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_MICROPHONE) == PackageManager.PERMISSION_GRANTED;
-        permissionGranted4 = ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
@@ -137,11 +118,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if (!permissionGranted3) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE_MICROPHONE}, REQUEST_CODE3);
         }
-
-        if (!permissionGranted4) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.INTERNET}, REQUEST_CODE4);
-        }
-
 
         db = Room.databaseBuilder(
                 getApplicationContext(),
@@ -303,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
         recordService.startFromActivity(path, fileName);

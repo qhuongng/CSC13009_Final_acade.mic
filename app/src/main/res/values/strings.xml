@@ -11,5 +11,16 @@
 
     <string name="transcript_placeholder">Generated captions will show up here.</string>
     <string name="transcript_executing">Transcribing audio…</string>
-    <string name="transcript_failure">There was an error transcribing the audio file. Please try again later.</string>
+    <string name="transcript_failure">There was a problem transcribing this file. Please try again later.</string>
+
+    <string-array name="transcript_languages">
+        <item>Tiếng Việt</item>
+        <item>English (US)</item>
+        <item>日本語</item>
+        <item>한국어</item>
+        <item>中文</item>
+        <item>Français</item>
+        <item>Español</item>
+        <item>Deutsch</item>
+    </string-array>
 </resources>

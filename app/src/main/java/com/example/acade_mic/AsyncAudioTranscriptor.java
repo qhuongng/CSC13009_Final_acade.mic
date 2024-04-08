@@ -49,18 +49,13 @@ public class AsyncAudioTranscriptor extends AsyncTask<String, Void, String> {
 
                 RecognitionAudio audio = RecognitionAudio.newBuilder().setContent(audioBytes).build();
 
-                ArrayList<String> languageList = new ArrayList<>();
-                languageList.add("es-US");
-
                 RecognitionConfig config =
                         RecognitionConfig.newBuilder()
                                 .setEncoding(RecognitionConfig.AudioEncoding.MP3)
                                 .setSampleRateHertz(16000)
                                 .setLanguageCode("vi-VN")
-                                .addAllAlternativeLanguageCodes(languageList)
                                 .setEnableAutomaticPunctuation(true)
                                 .build();
-
 
                 // Performs speech recognition on the audio file
                 OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =

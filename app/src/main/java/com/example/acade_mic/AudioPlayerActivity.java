@@ -3,28 +3,38 @@ package com.example.acade_mic;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +55,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private TextView transcriptTxt;
 
     private ImageButton btnTranscribe;
+    private ImageButton btnSummarize;
+    private ImageButton btnExport;
     private ImageButton btnPlay;
     private ImageButton btnBackward;
     private ImageButton btnForward;
@@ -60,6 +72,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     ImageButton flatBtn;
 
     private SpeechCredentialsProvider credentialsProvider;
+    private Spinner spLang;
 
     private final long delay = 100L;
     private final int jumvalue = 5000;
@@ -67,6 +80,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
     // audio file's id
     private int id;
+    public static boolean storagePermissionGranted;
 
     @Override
     public void onBackPressed(){
@@ -75,6 +89,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         mediaPlayer.release();
         handler.removeCallbacks(runnable);
     }
+
     public String dateFormat(int duration) {
         int d = duration / 1000;
         int s = d % 60;
@@ -115,7 +130,19 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         seekBar = findViewById(R.id.seekBar);
 
         btnTranscribe = findViewById(R.id.btnTranscribe);
+        btnSummarize = findViewById(R.id.btnSummarize);
+        btnExport = findViewById(R.id.btnExport);
         transcriptTxt = findViewById(R.id.transcriptTxt);
+
+        spLang = findViewById(R.id.spLang);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.transcript_languages,
+                android.R.layout.simple_spinner_item
+        );
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spLang.setAdapter(adapter);
+
         fetchTranscript();
 
         bookmarks = new ArrayList<>();
@@ -343,7 +370,23 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             public void onClick(View v) {
                 if (!transcriptTxt.getText().equals(String.valueOf(R.string.transcript_placeholder))) {
                     transcriptTxt.setText(R.string.transcript_executing);
+                    toggleTranscriptButtons(3);
+
                     transcribeAudio(filePath);
+                }
+            }
+        });
+
+        btnExport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String script = transcriptTxt.getText().toString();
+                String non1 = String.valueOf(R.string.transcript_placeholder);
+                String non2 = String.valueOf(R.string.transcript_executing);
+                String non3 = String.valueOf(R.string.transcript_failure);
+
+                if (script.length() > 0 && !script.equals(non1) && !script.equals(non2) && !script.equals(non3)) {
+                    exportTranscript(script);
                 }
             }
         });
@@ -355,7 +398,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
     @Override
     public void onTranscriptionCompleted(String transcript) {
-        // Update UI with the transcript
         transcriptTxt.setText(transcript);
 
         // save the transcript to the database for future reference
@@ -366,11 +408,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 db.transcriptionFileDao().insert(newTranscript);
             }
         }).start();
+
+        toggleTranscriptButtons(2);
     }
 
     @Override
     public void onTranscriptionFailed() {
         transcriptTxt.setText(R.string.transcript_failure);
+        toggleTranscriptButtons(1);
     }
 
     @Override
@@ -430,6 +475,54 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         }).start();
     }
 
+    /**
+     Toggles the buttons in the transcription view depending on the state of
+     the audio file's transcript.
+
+     States:
+        1 - No transcript found
+        2 - Found at least 1 transcript
+        3 - Executing transcription
+     */
+    private void toggleTranscriptButtons(int state) {
+        if (state == 1) {
+            btnTranscribe.setEnabled(true);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            btnSummarize.setEnabled(false);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnExport.setEnabled(false);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            spLang.setEnabled(false);
+        }
+        else if (state == 2) {
+            btnTranscribe.setEnabled(false);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnSummarize.setEnabled(true);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            btnExport.setEnabled(true);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            spLang.setEnabled(true);
+        }
+        else if (state == 3) {
+            btnTranscribe.setEnabled(false);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnSummarize.setEnabled(false);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnExport.setEnabled(false);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            spLang.setEnabled(false);
+        }
+    }
+
     private void fetchTranscript() {
         new Thread(new Runnable() {
             @Override
@@ -438,11 +531,48 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
                 if (queryResult != null) {
                     transcriptTxt.setText(queryResult.getContent());
+                    toggleTranscriptButtons(2);
                 }
                 else {
                     transcriptTxt.setText(R.string.transcript_placeholder);
+                    toggleTranscriptButtons(1);
                 }
             }
         }).start();
+    }
+
+    private void exportTranscript(String text) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            storagePermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+            if (!storagePermissionGranted) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 203);
+            }
+        }
+
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "acade.mic Transcripts");
+
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                Toast.makeText(this, "Failed to create directory", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        int num = 1;
+        String fname = tvFilename.getText().toString().split("\\.")[0];
+        File file = new File(directory, fname + "_transcript.txt");
+
+        while(file.exists()) {
+            file = new File(directory, fname + "_transcript_" + (num++) + ".txt");
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(text.getBytes());
+            Toast.makeText(this, "Transcript saved successfully", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error saving file", Toast.LENGTH_SHORT).show();
+        }
     }
 }
