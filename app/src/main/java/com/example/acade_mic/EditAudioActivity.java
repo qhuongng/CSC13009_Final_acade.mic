@@ -27,6 +27,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.room.Room;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -123,6 +124,10 @@ public class EditAudioActivity extends AppCompatActivity {
         View bottomSheet = findViewById(R.id.bottomSheet);
         TextView textViewTitle = bottomSheet.findViewById(R.id.textViewTitle);
 
+        tvTrackProgress.setText("00:00");
+        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+        seekBar.setProgress(0);
+
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null){
@@ -148,7 +153,6 @@ public class EditAudioActivity extends AppCompatActivity {
                     begin = slider.getValues().get(0);
                     end = slider.getValues().get(1);
 
-                    tvTrackProgress.setText("00:00");
                     int durationInSeconds = (int) (end - begin);
                     String duration = String.format("%02d:%02d", (durationInSeconds % 3600) / 60, durationInSeconds % 60);
                     tvTrackDuration.setText(duration);
@@ -260,7 +264,7 @@ public class EditAudioActivity extends AppCompatActivity {
                     mp.setLooping(false);
                     mp.seekTo(startTimeMs);
                     mp.start();
-
+                    btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
                     // Update the seekbar progress while playing
                     final int duration = endTimeMs - startTimeMs;
                     seekBar.setMax(duration);
@@ -272,6 +276,11 @@ public class EditAudioActivity extends AppCompatActivity {
                                 try {
                                     Thread.sleep(100);
                                     currentPosition = mediaPlayer.getCurrentPosition();
+                                    if(currentPosition >= endTimeMs){
+                                        mp.stop();
+                                        btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
+                                        mp.release();
+                                    }
                                     seekBar.setProgress(currentPosition - startTimeMs);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
