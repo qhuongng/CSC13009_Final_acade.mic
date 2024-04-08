@@ -19,7 +19,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Html;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -36,9 +38,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -81,6 +80,11 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     // audio file's id
     private int id;
     public static boolean storagePermissionGranted;
+
+    String[] langSpinner = { "Tiếng Việt (default)", "English (US)", "日本語", "한국어", "中文", "Français", "Español", "Deutsch" };
+    String[] langCodes = { "vi", "en", "ja", "ko", "zh", "fr", "es", "de"};
+
+    TranscriptionFile curTranscript;
 
     @Override
     public void onBackPressed(){
@@ -135,13 +139,21 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         transcriptTxt = findViewById(R.id.transcriptTxt);
 
         spLang = findViewById(R.id.spLang);
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
-                this,
-                R.array.transcript_languages,
-                android.R.layout.simple_spinner_item
-        );
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, langSpinner);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spLang.setAdapter(adapter);
+        spLang.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (curTranscript != null) {
+                    transcriptTxt.setText(R.string.translate_executing);
+                    fetchTranslatedTranscript(langCodes[position]);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
 
         fetchTranscript();
 
@@ -368,7 +380,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         btnTranscribe.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!transcriptTxt.getText().equals(String.valueOf(R.string.transcript_placeholder))) {
+                if (curTranscript == null) {
                     transcriptTxt.setText(R.string.transcript_executing);
                     toggleTranscriptButtons(3);
 
@@ -380,13 +392,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         btnExport.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String script = transcriptTxt.getText().toString();
-                String non1 = String.valueOf(R.string.transcript_placeholder);
-                String non2 = String.valueOf(R.string.transcript_executing);
-                String non3 = String.valueOf(R.string.transcript_failure);
-
-                if (script.length() > 0 && !script.equals(non1) && !script.equals(non2) && !script.equals(non3)) {
-                    exportTranscript(script);
+                if (curTranscript != null) {
+                    exportCurrentTranscript();
                 }
             }
         });
@@ -401,7 +408,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         transcriptTxt.setText(transcript);
 
         // save the transcript to the database for future reference
-        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript);
+        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript, "vi");
+        curTranscript = newTranscript;
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -425,7 +434,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             if(mediaPlayer.isPlaying()){
                 mediaPlayer.seekTo(bookmark.getPosition());
             }
-            else{
+            else {
                 btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
                 mediaPlayer.seekTo(bookmark.getPosition());
                 mediaPlayer.start();
@@ -527,10 +536,11 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         new Thread(new Runnable() {
             @Override
             public void run() {
-                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id);
+                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id, "vi");
 
                 if (queryResult != null) {
-                    transcriptTxt.setText(queryResult.getContent());
+                    curTranscript = queryResult;
+                    transcriptTxt.setText(curTranscript.getContent());
                     toggleTranscriptButtons(2);
                 }
                 else {
@@ -541,7 +551,58 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         }).start();
     }
 
-    private void exportTranscript(String text) {
+    private void fetchTranslatedTranscript(String targetLang) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id, targetLang);
+
+                if (queryResult != null) {
+                    curTranscript = queryResult;
+                    transcriptTxt.setText(curTranscript.getContent());
+                    toggleTranscriptButtons(2);
+                }
+                else {
+                    translateTranscript(targetLang);
+                }
+            }
+        }).start();
+    }
+
+    private void translateTranscript(String targetLang) {
+        // call the translator
+        AsyncTranslator translator = new AsyncTranslator();
+
+        try {
+            String result = translator.execute(getString(R.string.cloud_api_key), curTranscript.getContent(), curTranscript.getLangCode(), targetLang).get();
+
+            if (!result.isEmpty()) {
+                transcriptTxt.setText(Html.fromHtml(result).toString());
+
+                TranscriptionFile newTranscript = new TranscriptionFile(id, Html.fromHtml(result).toString(), targetLang);
+                curTranscript = newTranscript;
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.transcriptionFileDao().insert(newTranscript);
+                    }
+                }).start();
+
+                toggleTranscriptButtons(2);
+            }
+            else {
+                transcriptTxt.setText(R.string.translate_failure);
+                toggleTranscriptButtons(1);
+            }
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void exportCurrentTranscript() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             storagePermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
 
@@ -561,14 +622,14 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
         int num = 1;
         String fname = tvFilename.getText().toString().split("\\.")[0];
-        File file = new File(directory, fname + "_transcript.txt");
+        File file = new File(directory, fname + "_transcript_" + curTranscript.getLangCode() + ".txt");
 
         while(file.exists()) {
-            file = new File(directory, fname + "_transcript_" + (num++) + ".txt");
+            file = new File(directory, fname + "_transcript_" + curTranscript.getLangCode() + "_" + (num++) + ".txt");
         }
 
         try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(text.getBytes());
+            fos.write(curTranscript.getContent().getBytes());
             Toast.makeText(this, "Transcript saved successfully", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             e.printStackTrace();
