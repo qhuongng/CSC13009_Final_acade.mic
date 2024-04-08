@@ -25,21 +25,24 @@
 
     <LinearLayout
         android:id="@+id/transcriptView"
-        android:layout_width="320dp"
+        android:layout_width="350dp"
         android:layout_height="280dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@id/bookmarkRecyclerView"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolBar">
+
         <LinearLayout
-            android:background="#ECECEC"
+            android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp"
+            android:background="#ECECEC"
             android:paddingStart="15dp"
+            android:paddingTop="10dp"
             android:paddingEnd="15dp"
-            android:layout_width="match_parent">
+            android:paddingBottom="10dp">
+
             <ImageButton
                 android:id="@+id/btnTranscribe"
                 android:layout_width="30dp"
@@ -52,17 +55,17 @@
                 android:id="@+id/spLang"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_gravity="center"/>
+                android:layout_gravity="center"
+                android:layout_marginStart="10dp" />
 
             <ImageButton
                 android:id="@+id/btnSummarize"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:layout_marginStart="20dp"
+                android:layout_marginStart="10dp"
                 android:background="?selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_summarize"
-                app:tint="@color/midnightGreen"/>
+                app:tint="@color/midnightGreen" />
 
             <ImageButton
                 android:id="@+id/btnExport"
@@ -78,11 +81,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
             <TextView
                 android:id="@+id/transcriptTxt"
-                android:padding="20dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:padding="20dp"
                 android:textColor="@color/textColor"
                 android:textSize="16sp" />
 
@@ -91,7 +95,7 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/bookmarkRecyclerView"
-        android:layout_width="320dp"
+        android:layout_width="350dp"
         android:layout_height="125dp"
         app:layout_constraintBottom_toTopOf="@id/chip"
         app:layout_constraintEnd_toEndOf="parent"

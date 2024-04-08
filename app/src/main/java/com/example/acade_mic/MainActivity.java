@@ -95,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             db.close();
         }
 
+        Toast.makeText(this, "destroyed", Toast.LENGTH_SHORT).show();
+
         super.onDestroy();
     }
 
