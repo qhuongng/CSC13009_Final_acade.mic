@@ -3,6 +3,7 @@ package com.example.acade_mic;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -369,49 +370,46 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
     private void disableRename() {
         btnRename.setClickable(false);
-        btnRename.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        btnRename.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvRename.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
 
     private void disableDelete() {
         btnDelete.setClickable(false);
-        btnDelete.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        btnDelete.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
     private void disableShare(){
         btnShare.setClickable(false);
-        btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        btnShare.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
     private void disableEdit(){
         btnEditAudio.setClickable(false);
-        btnEditAudio.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+        btnEditAudio.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvEditAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
     private void enableRename() {
         btnRename.setClickable(true);
-        btnRename.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        btnRename.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvRename.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
 
     private void enableDelete() {
         btnDelete.setClickable(true);
-        btnDelete.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        btnDelete.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
     private void enableShare() {
         btnShare.setClickable(true);
-        btnShare.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        btnShare.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
     private void enableEdit() {
         btnEditAudio.setClickable(true);
-        btnEditAudio.setBackgroundTintList(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
+        btnEditAudio.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvEditAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
-
-
-
 
     private void searchDatabase(String query) {
         new Thread(new Runnable() {

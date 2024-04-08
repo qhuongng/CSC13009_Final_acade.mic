@@ -97,8 +97,9 @@
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_round_delete"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_delete"
+                app:tint="@color/disabledDarkGray"
                 android:layout_gravity="center"/>
 
             <TextView
@@ -121,9 +122,9 @@
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_round_edit"
-                />
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_edit"
+                app:tint="@color/disabledDarkGray" />
             <TextView
                 android:id="@+id/tvEdit"
                 android:layout_width="wrap_content"
@@ -143,9 +144,9 @@
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_round_edit"
-                />
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_trim"
+                app:tint="@color/disabledDarkGray" />
             <TextView
                 android:id="@+id/tvEditAudio"
                 android:layout_width="wrap_content"
@@ -164,8 +165,9 @@
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_share"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_share"
+                app:tint="@color/disabledDarkGray"
                 />
             <TextView
                 android:id="@+id/tvShare"
