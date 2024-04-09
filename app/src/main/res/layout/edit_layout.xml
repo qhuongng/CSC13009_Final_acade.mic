@@ -26,12 +26,77 @@
                 android:layout_height="wrap_content"/>
         </com.google.android.material.appbar.MaterialToolbar>
 
-        <com.example.acade_mic.WaveformView
-            android:id="@+id/waveformView"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="400px"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            android:layout_height="wrap_content"
+            android:id="@+id/resourcesBox"
+            android:background="#DDDDDD"
+            android:padding="16dp"
+            app:layout_constraintTop_toBottomOf="@id/toolBarEdit">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/tvResource"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:text="Resources"/>
+
+            <!-- Square box containing selectable items -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/fileNamesBox"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:background="#FFFFFF"
+                app:layout_constraintTop_toBottomOf="@id/tvResource"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"
+                android:padding="8dp">
+
+                <!-- Spinner for selecting items -->
+                <Spinner
+                    android:id="@+id/fileSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:padding="8dp"
+                    android:spinnerMode="dropdown"/>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="10dp"
+            android:padding="16dp"
+            android:background="#DDDDDD"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@id/resourcesBox">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order file to Merge"
+                android:textSize="20dp"
+                android:textStyle="bold"
+                android:textAlignment="center"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/selectedItemsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp"/>
+        </LinearLayout>
+
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,8 +107,15 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="30dp"
                 android:id="@+id/cutAudio"
                 android:text="Cut"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/mergeAudio"
+                android:text="Merge"/>
         </LinearLayout>
 
         <com.google.android.material.slider.RangeSlider
