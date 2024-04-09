@@ -254,7 +254,7 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
         isRecording = true;

@@ -4,6 +4,7 @@ package com.example.acade_mic;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -26,6 +27,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.room.Room;
 
 import com.google.android.material.appbar.MaterialToolbar;
@@ -39,6 +41,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -53,6 +57,8 @@ public class EditAudioActivity extends AppCompatActivity {
     MediaPlayer mediaPlayer;
     private TextView tvFilename;
     private Button cutAudio;
+    private TextView tvTrackProgress;
+    private TextView tvTrackDuration;
 
     // bottomSheet
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
@@ -106,6 +112,8 @@ public class EditAudioActivity extends AppCompatActivity {
         seekBar = findViewById(R.id.seekBar);
         tvFilename = findViewById(R.id.tvFilename);
         cutAudio = findViewById(R.id.cutAudio);
+        tvTrackProgress = findViewById(R.id.tvTrackProgress);
+        tvTrackDuration = findViewById(R.id.tvTrackDuration);
         RangeSlider rangeSlider = findViewById(R.id.rangeSlider);
         tvFilename.setText(fileName);
 
@@ -115,6 +123,10 @@ public class EditAudioActivity extends AppCompatActivity {
         btnSave = (MaterialButton) findViewById(R.id.btnSave);
         View bottomSheet = findViewById(R.id.bottomSheet);
         TextView textViewTitle = bottomSheet.findViewById(R.id.textViewTitle);
+
+        tvTrackProgress.setText("00:00");
+        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+        seekBar.setProgress(0);
 
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -138,8 +150,12 @@ public class EditAudioActivity extends AppCompatActivity {
             @Override
             public void onValueChange(@NonNull RangeSlider slider, float value, boolean fromUser) {
                 if(fromUser){
-                    begin = rangeSlider.getValues().get(0);
-                    end = rangeSlider.getValues().get(1);
+                    begin = slider.getValues().get(0);
+                    end = slider.getValues().get(1);
+
+                    int durationInSeconds = (int) (end - begin);
+                    String duration = String.format("%02d:%02d", (durationInSeconds % 3600) / 60, durationInSeconds % 60);
+                    tvTrackDuration.setText(duration);
                 }
             }
         });
@@ -175,6 +191,18 @@ public class EditAudioActivity extends AppCompatActivity {
 
             cutAudioFile(newFileName, fileName, filePath, start, end);
         });
+
+        btnPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Get the start and end values from the range slider
+                float start = rangeSlider.getValues().get(0);
+                float end = rangeSlider.getValues().get(1);
+
+                // Play the audio file with the specified start and end values
+                playAudio(filePath, start, end);
+            }
+        });
     }
 
     private void dismiss() {
@@ -191,6 +219,20 @@ public class EditAudioActivity extends AppCompatActivity {
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
 
+    public String dateFormat(int duration) {
+        int d = duration / 1000;
+        int s = d % 60;
+        int m = (d / 60) % 60;
+        int h = (d - m * 60) / 360;
+
+        NumberFormat f = new DecimalFormat("00");
+        String str = m + ":" + f.format(s);
+        if (h > 0) {
+            str = h + ":" + str;
+        }
+        return str;
+    }
+
     private float calculateAudioDuration(String filePath){
         FileInputStream fis = null;
         try {
@@ -203,6 +245,58 @@ public class EditAudioActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
     }
+
+    private void playAudio(String filePath, float startSeconds, float endSeconds) {
+        try {
+            // Reset the MediaPlayer before initializing it
+            mediaPlayer.reset();
+
+            // Set the data source and prepare the MediaPlayer
+            mediaPlayer.setDataSource(filePath);
+            mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    // Calculate start and end time in milliseconds
+                    int startTimeMs = (int) (startSeconds * 1000);
+                    int endTimeMs = (int) (endSeconds * 1000);
+
+                    // Set the start time and duration for playback
+                    mp.setLooping(false);
+                    mp.seekTo(startTimeMs);
+                    mp.start();
+                    btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
+                    // Update the seekbar progress while playing
+                    final int duration = endTimeMs - startTimeMs;
+                    seekBar.setMax(duration);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int currentPosition = startTimeMs;
+                            while (mediaPlayer != null && currentPosition <= endTimeMs) {
+                                try {
+                                    Thread.sleep(100);
+                                    currentPosition = mediaPlayer.getCurrentPosition();
+                                    if(currentPosition >= endTimeMs){
+                                        mp.stop();
+                                        btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
+                                        mp.release();
+                                    }
+                                    seekBar.setProgress(currentPosition - startTimeMs);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).start();
+                }
+            });
+            mediaPlayer.prepareAsync(); // Prepare asynchronously
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     @SuppressLint("WrongConstant")
     private void cutAudioFile(String newFileName, String oldFileName, String filePath, float startSeconds, float endSeconds){
         String[] path = filePath.split(oldFileName);

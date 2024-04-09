@@ -291,7 +291,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             }
         };
 
-        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+            tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
 
         seekBar.setMax(mediaPlayer.getDuration());
         //thay đổi icon play khi phát xong
