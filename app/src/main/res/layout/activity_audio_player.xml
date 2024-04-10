@@ -6,20 +6,117 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     tools:context=".AudioPlayerActivity">
+
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolBar"
         android:layout_width="match_parent"
         android:layout_height="?actionBarSize"
         app:layout_constraintTop_toTopOf="parent"
-        app:title=" ">
+        app:title=" "
+        tools:layout_editor_absoluteX="0dp">
+
         <TextView
             android:id="@+id/tvFilename"
-            android:textSize="20sp"
-            android:gravity="center"
-            android:layout_marginEnd="46dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="40dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textSize="16sp" />
     </com.google.android.material.appbar.MaterialToolbar>
+
+    <LinearLayout
+        android:id="@+id/transcriptView"
+        android:layout_width="350dp"
+        android:layout_height="280dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@id/bookmarkRecyclerView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolBar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:background="#ECECEC"
+            android:paddingStart="15dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="15dp"
+            android:paddingBottom="10dp">
+
+            <ImageButton
+                android:id="@+id/btnTranscribe"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_transcript"
+                app:tint="@color/midnightGreen" />
+
+            <Spinner
+                android:id="@+id/spLang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginStart="10dp" />
+
+            <ImageButton
+                android:id="@+id/btnSummarize"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="10dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_summarize"
+                app:tint="@color/midnightGreen" />
+
+            <ImageButton
+                android:id="@+id/btnExport"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginStart="10dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_download"
+                app:tint="@color/midnightGreen" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/transcriptTxt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="20dp"
+                android:textColor="@color/textColor"
+                android:textSize="16sp" />
+
+        </ScrollView>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/bookmarkRecyclerView"
+        android:layout_width="300dp"
+        android:layout_height="150dp"
+        app:layout_constraintBottom_toTopOf="@id/chip"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/transcriptView"
+        app:layout_constraintVertical_bias="0.961" />
+
+    <ImageButton
+        android:id="@+id/reviewAlarm"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="20dp"
+        android:background="@drawable/ic_clock"
+        app:layout_constraintBottom_toTopOf="@+id/seekBar"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints" />
+
     <com.google.android.material.chip.Chip
         android:id="@+id/chip"
         android:layout_width="62dp"
@@ -30,7 +127,7 @@
         app:layout_constraintBottom_toTopOf="@+id/seekBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-    
+
     <SeekBar
         android:id="@+id/seekBar"
         android:layout_width="match_parent"
@@ -65,7 +162,7 @@
         android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="30dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <ImageButton
@@ -81,6 +178,7 @@
             android:id="@+id/btnBackward"
             android:layout_width="60dp"
             android:layout_height="60dp"
+            android:layout_marginEnd="25dp"
             android:background="?selectableItemBackgroundBorderless"
             android:src="@drawable/ic_rewind_5"
             app:layout_constraintEnd_toStartOf="@+id/btnPlay"
@@ -88,9 +186,31 @@
             tools:ignore="MissingConstraints" />
 
         <ImageButton
+            android:id="@+id/btnBookmark"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_flag_24"
+            app:layout_constraintStart_toEndOf="@+id/btnBackward"
+            app:layout_constraintEnd_toStartOf="@+id/btnPlay"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"/>
+
+        <ImageButton
+            android:id="@+id/btnLoop"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_loop"
+            app:layout_constraintStart_toEndOf="@+id/btnPlay"
+            app:layout_constraintEnd_toStartOf="@+id/btnForward"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"/>
+        <ImageButton
             android:id="@+id/btnForward"
             android:layout_width="60dp"
             android:layout_height="60dp"
+            android:layout_marginStart="25dp"
             android:background="?selectableItemBackgroundBorderless"
             android:src="@drawable/ic_forward_5"
             app:layout_constraintEnd_toEndOf="parent"

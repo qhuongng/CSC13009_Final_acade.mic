@@ -1,3 +1,19 @@
 <resources>
     <string name="app_name">acade.mic</string>
+    <string name="appwidget_text">Acade.mic</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">Acade.mic quick app access</string>
+
+    <string-array name="rangeSlider">
+        <item>20</item>
+        <item>70</item>
+    </string-array>
+
+    <string name="transcript_placeholder">Generated captions will show up here.</string>
+    <string name="transcript_executing">Transcribing audio…</string>
+    <string name="transcript_failure">There was a problem transcribing this file. Please try again later.</string>
+    <string name="translate_executing">Translating transcript…</string>
+    <string name="translate_failure">There was a problem translating the audio transcript. Please try again later.</string>
+
+    <string name="cloud_api_key">AIzaSyCbShtQs2_UDhfn3PdVAPwgby4F_lkJ2SU</string>
 </resources>

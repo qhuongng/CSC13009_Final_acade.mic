@@ -1,55 +1,103 @@
 package com.example.acade_mic;
 
-import androidx.activity.OnBackPressedCallback;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Html;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
+import com.example.acade_mic.adapter.BookmarkAdapter;
+import com.example.acade_mic.model.Bookmark;
+import com.example.acade_mic.model.TranscriptionFile;
+import com.google.ai.client.generativeai.GenerativeModel;
+import com.google.ai.client.generativeai.java.GenerativeModelFutures;
+import com.google.ai.client.generativeai.type.Content;
+import com.google.ai.client.generativeai.type.GenerateContentResponse;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.FileDescriptor;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-public class AudioPlayerActivity extends AppCompatActivity {
+
+public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
     private MediaPlayer mediaPlayer;
     private MaterialToolbar toolbar;
     private TextView tvFilename;
     private TextView tvTrackProgress;
     private TextView tvTrackDuration;
+    private TextView transcriptTxt;
+
+    private ImageButton btnTranscribe;
+    private ImageButton btnSummarize;
+    private ImageButton btnExport;
     private ImageButton btnPlay;
     private ImageButton btnBackward;
     private ImageButton btnForward;
+    private ImageButton btnLoop;
     private Chip speedChip;
     private SeekBar seekBar;
     private Runnable runnable;
     private Handler handler;
+    private boolean checkLoop;
+    private ArrayList<Bookmark> bookmarks;
+    private AppDatabase db;
+    private BookmarkAdapter bAdapter;
+    ImageButton flatBtn;
+
+    private CloudCredentialsProvider credentialsProvider;
+    private Spinner spLang;
 
     private final long delay = 100L;
-    private final int jumvalue = 1000;
+    private final int jumvalue = 5000;
     private float playBackSpeed = 1.0f;
+
+    // audio file's id
+    private int id;
+    public static boolean storagePermissionGranted;
+
+    String[] langSpinner = { "Tiếng Việt (default)", "English (US)", "日本語", "한국어", "中文", "Français", "Español", "Deutsch" };
+    String[] langCodes = { "vi", "en", "ja", "ko", "zh", "fr", "es", "de"};
+
+    TranscriptionFile curTranscript;
 
     @Override
     public void onBackPressed(){
@@ -58,6 +106,7 @@ public class AudioPlayerActivity extends AppCompatActivity {
         mediaPlayer.release();
         handler.removeCallbacks(runnable);
     }
+
     public String dateFormat(int duration) {
         int d = duration / 1000;
         int s = d % 60;
@@ -71,24 +120,151 @@ public class AudioPlayerActivity extends AppCompatActivity {
         }
         return str;
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
-        mediaPlayer = new MediaPlayer();
 
+        credentialsProvider = new CloudCredentialsProvider(this);
+
+        mediaPlayer = new MediaPlayer();
+        bookmarks = new ArrayList<Bookmark>();
         String filePath = getIntent().getStringExtra("filepath");
         String fileName = getIntent().getStringExtra("filename");
+        id =  getIntent().getIntExtra("id",0);
 
+        //int id = Integer.parseInt();
         toolbar = findViewById(R.id.toolBar);
         tvFilename = findViewById(R.id.tvFilename);
         tvTrackProgress = findViewById(R.id.tvTrackProgess);
         tvTrackDuration = findViewById(R.id.tvTrackDuration);
         btnBackward = findViewById(R.id.btnBackward);
         btnForward = findViewById(R.id.btnForward);
+        btnLoop = findViewById(R.id.btnLoop);
         btnPlay = findViewById(R.id.btnPlay);
         speedChip = findViewById(R.id.chip);
         seekBar = findViewById(R.id.seekBar);
+
+        btnTranscribe = findViewById(R.id.btnTranscribe);
+        btnSummarize = findViewById(R.id.btnSummarize);
+        btnExport = findViewById(R.id.btnExport);
+        transcriptTxt = findViewById(R.id.transcriptTxt);
+
+        spLang = findViewById(R.id.spLang);
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, langSpinner);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spLang.setAdapter(adapter);
+        spLang.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (curTranscript != null) {
+                    transcriptTxt.setText(R.string.translate_executing);
+                    fetchTranslatedTranscript(langCodes[position]);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        fetchTranscript();
+
+        bookmarks = new ArrayList<>();
+        db = AppDatabase.getInstance(this);
+        bAdapter = new BookmarkAdapter(bookmarks,this,this);
+        RecyclerView recyclerView = findViewById(R.id.bookmarkRecyclerView);
+        recyclerView.setAdapter(bAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        fetchAll(id);
+        //
+        flatBtn = findViewById(R.id.btnBookmark);
+        flatBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int check = 0;
+                for(Bookmark bm : bookmarks){
+                    if(dateFormat(bm.getPosition()).equals(dateFormat(mediaPlayer.getCurrentPosition()))) check++;
+                }
+                if(check == 0){
+                    mediaPlayer.pause();
+                    // setup for note
+                    AlertDialog.Builder alertDialog = new AlertDialog.Builder(AudioPlayerActivity.this);
+                    View popupView = getLayoutInflater().inflate(R.layout.popup_insert_note, null);
+                    EditText editTextNote = popupView.findViewById(R.id.editTextNote);
+
+                    ImageButton saveBtn = popupView.findViewById(R.id.btnSaveNote);
+                    ImageButton cancelBtn = popupView.findViewById(R.id.btnCancel);
+                    alertDialog.setView(popupView);
+                    AlertDialog dialog = alertDialog.create();
+                    dialog.show();
+                    final boolean[] saveNote = {false};
+                    saveBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String note = editTextNote.getText().toString().trim();
+                            if(!note.isEmpty()){
+                                Bookmark newBm = new Bookmark(id,mediaPlayer.getCurrentPosition(), note);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.bookmarkDao().insert(newBm);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                bookmarks.add(newBm);
+                                                bAdapter.notifyDataSetChanged();
+                                                saveNote[0] = true;
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                    }
+                                }).start();
+                                recyclerView.smoothScrollToPosition(bookmarks.size());
+
+                                mediaPlayer.start();
+                            }  else {
+                            // Người dùng không nhập ghi chú, bạn có thể xử lý ở đây
+                            Toast.makeText(AudioPlayerActivity.this, "Please enter a note", Toast.LENGTH_SHORT).show();
+                                mediaPlayer.start();
+                            }
+                        }
+                    });
+                    dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            String note = editTextNote.getText().toString().trim();
+                            if (!note.isEmpty() && !saveNote[0]) {
+                                Bookmark newBm = new Bookmark(id, mediaPlayer.getCurrentPosition(),note);
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.bookmarkDao().insert(newBm);
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                bookmarks.add(newBm);
+                                                bAdapter.notifyDataSetChanged();
+                                            }
+                                        });
+                                    }
+                                }).start();
+                                recyclerView.smoothScrollToPosition(bookmarks.size());
+                            }
+                            mediaPlayer.start();
+                        }
+                    });
+                    cancelBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            dialog.dismiss(); // Đóng dialog mà không lưu ghi chú
+                            mediaPlayer.start();
+                        }
+                    });
+                    //
+                }
+            }
+        });
 
         //setup for toolbar
         setSupportActionBar(toolbar);
@@ -128,15 +304,21 @@ public class AudioPlayerActivity extends AppCompatActivity {
             }
         };
 
-        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+            tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
 
         seekBar.setMax(mediaPlayer.getDuration());
         //thay đổi icon play khi phát xong
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-                btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
-                handler.removeCallbacks(runnable);
+                mediaPlayer.seekTo(0);
+                if(!checkLoop){
+                    btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
+                    handler.removeCallbacks(runnable);
+                } else {
+                    mediaPlayer.start();
+                }
+
             }
         });
         //tua thêm
@@ -171,8 +353,10 @@ public class AudioPlayerActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(fromUser)
+                if(fromUser){
                     mediaPlayer.seekTo(progress);
+                    mediaPlayer.start();
+                }
             }
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -193,5 +377,416 @@ public class AudioPlayerActivity extends AppCompatActivity {
                 }
             }
         });
+        btnLoop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!checkLoop){
+                    checkLoop = true;
+                    btnLoop.setImageResource(R.drawable.ic_noloop);
+                } else{
+                    checkLoop = false;
+                    btnLoop.setImageResource(R.drawable.ic_loop);
+                }
+            }
+        });
+
+        btnTranscribe.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (curTranscript == null) {
+                    transcriptTxt.setText(R.string.transcript_executing);
+                    toggleTranscriptButtons(3);
+
+                    transcribeAudio(filePath);
+                }
+            }
+        });
+
+        btnExport.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (curTranscript != null) {
+                    exportCurrentTranscript();
+                }
+            }
+        });
+
+        btnSummarize.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (curTranscript != null) {
+                    runOnUiThread(ToastExecutingSummary);
+                    exportTranscriptSummary();
+                }
+            }
+        });
+    }
+
+    private Runnable ToastExecutingSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Summarizing transcript...", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    @Override
+    public void onItemClickListener(int position) {
+        try {
+            Bookmark bookmark = bookmarks.get(position);
+            if(mediaPlayer.isPlaying()){
+                mediaPlayer.seekTo(bookmark.getPosition());
+            }
+            else {
+                btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
+                mediaPlayer.seekTo(bookmark.getPosition());
+                mediaPlayer.start();
+                handler.postDelayed(runnable, delay);
+            }
+
+        } catch (Exception exception){
+            System.out.println(exception.fillInStackTrace());
+        }
+    }
+
+    @Override
+    public void onItemLongClickListener(int position) {
+        Bookmark bookmark = bookmarks.get(position);
+        mediaPlayer.seekTo(bookmark.getPosition());
+        if(mediaPlayer.isPlaying()) mediaPlayer.pause();
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(AudioPlayerActivity.this);
+        View popupView = getLayoutInflater().inflate(R.layout.show_note, null);
+        TextView textNote = popupView.findViewById(R.id.noteTV);
+        textNote.setText(bookmark.getNote());
+        alertDialog.setView(popupView);
+        AlertDialog dialog = alertDialog.create();
+        dialog.show();
+        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                dialog.dismiss();
+                mediaPlayer.start();
+            }
+        });
+    }
+    private void fetchAll(int id) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                bookmarks.clear();
+                List<Bookmark> queryResult = db.bookmarkDao().getBookmarksByAudioId(id);
+                bookmarks.addAll(queryResult);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        bAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    public void transcribeAudio(String filePath) {
+        new AsyncAudioTranscriptor(credentialsProvider, this).execute(filePath);
+    }
+
+    @Override
+    public void onTranscriptionCompleted(String transcript) {
+        transcriptTxt.setText(transcript);
+
+        // save the transcript to the database for future reference
+        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript, "vi");
+        curTranscript = newTranscript;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                db.transcriptionFileDao().insert(newTranscript);
+            }
+        }).start();
+
+        toggleTranscriptButtons(2);
+    }
+
+    @Override
+    public void onTranscriptionFailed() {
+        transcriptTxt.setText(R.string.transcript_failure);
+        toggleTranscriptButtons(1);
+    }
+
+    /**
+     Toggles the buttons in the transcription view depending on the state of
+     the audio file's transcript.
+
+     States:
+        1 - No transcript found
+        2 - Found at least 1 transcript
+        3 - Executing transcription
+     */
+    private void toggleTranscriptButtons(int state) {
+        if (state == 1) {
+            btnTranscribe.setEnabled(true);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            btnSummarize.setEnabled(false);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnExport.setEnabled(false);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            spLang.setEnabled(false);
+        }
+        else if (state == 2) {
+            btnTranscribe.setEnabled(false);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnSummarize.setEnabled(true);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            btnExport.setEnabled(true);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.midnightGreen));
+
+            spLang.setEnabled(true);
+        }
+        else if (state == 3) {
+            btnTranscribe.setEnabled(false);
+            btnTranscribe.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnSummarize.setEnabled(false);
+            btnSummarize.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            btnExport.setEnabled(false);
+            btnExport.setImageTintList(ContextCompat.getColorStateList(AudioPlayerActivity.this, R.color.disabledDarkGray));
+
+            spLang.setEnabled(false);
+        }
+    }
+
+    private void fetchTranscript() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id, "vi");
+
+                if (queryResult != null) {
+                    curTranscript = queryResult;
+                    transcriptTxt.setText(curTranscript.getContent());
+                    toggleTranscriptButtons(2);
+                }
+                else {
+                    transcriptTxt.setText(R.string.transcript_placeholder);
+                    toggleTranscriptButtons(1);
+                }
+            }
+        }).start();
+    }
+
+    private Runnable ToastSuccessfulSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Summary saved to device's Downloads folder", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private Runnable ToastFailedSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Failed to summarize transcript, please try again later", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private void summaryExportHelper() {
+        if (curTranscript.getSummary().length() > 0) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                storagePermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+                if (!storagePermissionGranted) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 203);
+                }
+            }
+
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "acade.mic Summaries");
+
+            if (!directory.exists()) {
+                if (!directory.mkdirs()) {
+                    System.out.println("mkdirs failed");
+                    return;
+                }
+            }
+
+            int num = 1;
+            String fname = tvFilename.getText().toString().split("\\.")[0];
+            File file = new File(directory, fname + "_summary_" + curTranscript.getLangCode() + ".txt");
+
+            while(file.exists()) {
+                file = new File(directory, fname + "_summary_" + curTranscript.getLangCode() + "_" + (num++) + ".txt");
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(curTranscript.getSummary().getBytes());
+                this.runOnUiThread(ToastSuccessfulSummary);
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.runOnUiThread(ToastFailedSummary);
+            }
+        }
+        else {
+            summarizeCurrentTranscript();
+        }
+    }
+
+    private void summarizeCurrentTranscript() {
+        final boolean[] summarizeSuccess = {false};
+
+        GenerativeModel gm = new GenerativeModel("gemini-pro", getString(R.string.cloud_api_key));
+        GenerativeModelFutures model = GenerativeModelFutures.from(gm);
+
+        Content content = new Content.Builder()
+                .addText("Summarize this text into bullet points, making sure that: THE SUMMARY IS IN THE SAME LANGUAGE AS THE TEXT PROVIDED AND NOT THE PROMPT, the wording is concise and easy to understand, and no numerical data point is left out: " + curTranscript.getContent().replace("\"", "\\\"").replace("\n", "\\n"))
+                .build();
+
+        ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
+        Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
+            @Override
+            public void onSuccess(GenerateContentResponse result) {
+                String summary = result.getText();
+
+                TranscriptionFile summarizedTranscript = new TranscriptionFile(id, curTranscript.getContent(), summary, curTranscript.getLangCode());
+                curTranscript = summarizedTranscript;
+                summaryExportHelper();
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.transcriptionFileDao().update(summarizedTranscript);
+                    }
+                }).start();
+
+                summarizeSuccess[0] = true;
+                toggleTranscriptButtons(2);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                t.printStackTrace();
+            }
+        }, this.getMainExecutor());
+    }
+
+    private void exportTranscriptSummary() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (curTranscript.getSummary().length() > 0) {
+                    summaryExportHelper();
+                }
+                else {
+                    summarizeCurrentTranscript();
+                }
+            }
+        }).start();
+    }
+
+    private void fetchTranslatedTranscript(String targetLang) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                TranscriptionFile queryResult = db.transcriptionFileDao().getTranscript(id, targetLang);
+
+                if (queryResult != null) {
+                    curTranscript = queryResult;
+                    transcriptTxt.setText(curTranscript.getContent());
+                    toggleTranscriptButtons(2);
+                }
+                else {
+                    translateTranscript(targetLang);
+                }
+            }
+        }).start();
+    }
+
+    private void translateTranscript(String targetLang) {
+        // call the translator
+        AsyncTranslator translator = new AsyncTranslator();
+
+        try {
+            String result = translator.execute(getString(R.string.cloud_api_key), curTranscript.getContent(), curTranscript.getLangCode(), targetLang).get();
+
+            if (!result.isEmpty()) {
+                // Update UI element on the main UI thread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        transcriptTxt.setText(Html.fromHtml(result).toString());
+                    }
+                });
+
+                TranscriptionFile newTranscript = new TranscriptionFile(id, Html.fromHtml(result).toString(), targetLang);
+                curTranscript = newTranscript;
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.transcriptionFileDao().insert(newTranscript);
+                    }
+                }).start();
+
+                toggleTranscriptButtons(2);
+            }
+            else {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        transcriptTxt.setText(R.string.translate_failure);
+                    }
+                });
+                toggleTranscriptButtons(1);
+            }
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void exportCurrentTranscript() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            storagePermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+            if (!storagePermissionGranted) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 203);
+            }
+        }
+
+        File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "acade.mic Transcripts");
+
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                Toast.makeText(this, "Failed to create directory", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        int num = 1;
+        String fname = tvFilename.getText().toString().split("\\.")[0];
+        File file = new File(directory, fname + "_transcript_" + curTranscript.getLangCode() + ".txt");
+
+        while(file.exists()) {
+            file = new File(directory, fname + "_transcript_" + curTranscript.getLangCode() + "_" + (num++) + ".txt");
+        }
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(curTranscript.getContent().getBytes());
+            Toast.makeText(this, "Transcript saved successfully", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Error saving file", Toast.LENGTH_SHORT).show();
+        }
     }
 }

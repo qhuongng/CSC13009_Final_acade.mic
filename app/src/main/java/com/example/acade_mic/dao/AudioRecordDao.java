@@ -1,4 +1,4 @@
-package com.example.acade_mic;
+package com.example.acade_mic.dao;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -6,7 +6,8 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import java.util.Arrays;
+import com.example.acade_mic.model.AudioRecord;
+
 import java.util.List;
 
 @Dao

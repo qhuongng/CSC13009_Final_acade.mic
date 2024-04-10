@@ -17,7 +17,7 @@
         android:background="@color/white">
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
-            android:layout_height="130dp"
+            android:layout_height="160dp"
             app:layout_scrollFlags="scroll|exitUntilCollapsed"
             >
             <com.google.android.material.appbar.MaterialToolbar
@@ -65,13 +65,13 @@
         </com.google.android.material.textfield.TextInputLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         app:layout_constraintTop_toTopOf="parent" />
-
 
     <LinearLayout
         android:id="@+id/bottomSheet"
@@ -89,16 +89,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginEnd="90dp"
             android:gravity="center"
+            android:layout_marginEnd="60dp"
             >
             <ImageButton
                 android:id="@+id/btnDelete"
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_round_delete"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_delete"
+                app:tint="@color/disabledDarkGray"
                 android:layout_gravity="center"/>
 
             <TextView
@@ -110,23 +111,70 @@
         </LinearLayout>
 
         <LinearLayout
+
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="60dp">
             <ImageButton
                 android:id="@+id/btnEdit"
                 android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:backgroundTint="@color/disabledDarkGray"
-                android:background="@drawable/ic_round_edit"
-                android:layout_gravity="center"/>
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_edit"
+                app:tint="@color/disabledDarkGray" />
             <TextView
                 android:id="@+id/tvEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/disabledDarkGray"
+                android:text="Rename"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="60dp">
+            <ImageButton
+                android:id="@+id/btnEditAudio"
+                android:clickable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_round_trim"
+                app:tint="@color/disabledDarkGray" />
+            <TextView
+                android:id="@+id/tvEditAudio"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
                 android:text="Edit"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+            <ImageButton
+                android:id="@+id/btnShare"
+                android:clickable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_share"
+                app:tint="@color/disabledDarkGray"
+                />
+            <TextView
+                android:id="@+id/tvShare"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
+                android:text="Share"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
