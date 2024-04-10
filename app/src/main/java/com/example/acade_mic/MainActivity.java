@@ -15,6 +15,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,6 +28,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -77,13 +79,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if(recordService != null && recordService.isRecording && recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD PAUSE");
             pauseRec(FROM_WIDGET);
             syncPauseTime();
         }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD RESUME");
             resumeRec(FROM_WIDGET);
         }
     }
@@ -209,7 +209,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
+        Button schedulerBtn = (Button) findViewById(R.id.schedulerBtn);
+        schedulerBtn.setOnClickListener((View v)->{
+            Intent startSchedulerIntent = new Intent(this, AlarmActivity.class);
+            startActivity(startSchedulerIntent);
+        });
     }
+
 
     public void save() {
         String newFileName = fileNameInput.getText().toString();
@@ -331,7 +337,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public void stopRec() {
         timer.stop();
 
-        recordService.stop();
+        recordService.stop(false);
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -356,6 +362,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             tvTimer.setText(recordService.currentTime);
             this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
             waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        }else{
+            tvTimer.setText("00:00.00");
         }
     }
 

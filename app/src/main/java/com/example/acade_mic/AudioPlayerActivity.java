@@ -30,6 +30,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.acade_mic.adapter.BookmarkAdapter;
+import com.example.acade_mic.model.Bookmark;
+import com.example.acade_mic.model.TranscriptionFile;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 

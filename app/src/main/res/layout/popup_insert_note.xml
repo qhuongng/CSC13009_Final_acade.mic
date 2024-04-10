@@ -24,10 +24,10 @@
 
             android:background="@drawable/ic_close_mini" />
     </LinearLayout>
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:background="@color/black" />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:background="@color/black" />
     <EditText
         android:id="@+id/editTextNote"
         android:layout_width="match_parent"

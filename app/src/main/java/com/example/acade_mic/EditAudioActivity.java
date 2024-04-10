@@ -4,7 +4,6 @@ package com.example.acade_mic;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioAttributes;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -17,7 +16,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -30,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
@@ -249,8 +248,9 @@ public class EditAudioActivity extends AppCompatActivity {
     private void playAudio(String filePath, float startSeconds, float endSeconds) {
         try {
             // Reset the MediaPlayer before initializing it
-            mediaPlayer.reset();
-
+            if (mediaPlayer != null && (mediaPlayer.isPlaying() || mediaPlayer.isLooping())) {
+                mediaPlayer.reset();
+            }
             // Set the data source and prepare the MediaPlayer
             mediaPlayer.setDataSource(filePath);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {

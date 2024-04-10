@@ -1,4 +1,4 @@
-package com.example.acade_mic;
+package com.example.acade_mic.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -6,10 +6,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.acade_mic.AppDatabase;
+import com.example.acade_mic.OnItemClickListener;
+import com.example.acade_mic.R;
+import com.example.acade_mic.model.Bookmark;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

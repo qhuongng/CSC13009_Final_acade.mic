@@ -20,15 +20,14 @@
         android:textStyle="bold|italic" />
 
     <TextView
+        android:id="@+id/status"
         android:layout_width="100sp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
-        android:textSize="15sp"
-        android:text="NOT RECORDING"
-        android:textStyle="bold"
         android:gravity="center_vertical"
-        android:id="@+id/status"
-        />
+        android:text="NOT RECORDING"
+        android:textSize="15sp"
+        android:textStyle="bold" />
 
     <Button
         android:layout_width="wrap_content"

@@ -1,4 +1,4 @@
-package com.example.acade_mic;
+package com.example.acade_mic.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,17 +9,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.acade_mic.OnItemClickListener;
+import com.example.acade_mic.R;
+import com.example.acade_mic.model.AudioRecord;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class Adapter extends RecyclerView.Adapter<Adapter.ViewHolder> {
     private ArrayList<AudioRecord> records;
     private OnItemClickListener listener;
     private boolean editMode = false;
 
-    public Adapter(ArrayList<AudioRecord> records,OnItemClickListener listener) {
+    public Adapter(ArrayList<AudioRecord> records, OnItemClickListener listener) {
         this.records = records;
         this.listener = listener;
     }
