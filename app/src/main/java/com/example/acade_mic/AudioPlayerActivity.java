@@ -33,8 +33,15 @@ import android.widget.Toast;
 import com.example.acade_mic.adapter.BookmarkAdapter;
 import com.example.acade_mic.model.Bookmark;
 import com.example.acade_mic.model.TranscriptionFile;
+import com.google.ai.client.generativeai.GenerativeModel;
+import com.google.ai.client.generativeai.java.GenerativeModelFutures;
+import com.google.ai.client.generativeai.type.Content;
+import com.google.ai.client.generativeai.type.GenerateContentResponse;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,8 +51,11 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
@@ -73,7 +83,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private BookmarkAdapter bAdapter;
     ImageButton flatBtn;
 
-    private SpeechCredentialsProvider credentialsProvider;
+    private CloudCredentialsProvider credentialsProvider;
     private Spinner spLang;
 
     private final long delay = 100L;
@@ -116,7 +126,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio_player);
 
-        credentialsProvider = new SpeechCredentialsProvider(this);
+        credentialsProvider = new CloudCredentialsProvider(this);
 
         mediaPlayer = new MediaPlayer();
         bookmarks = new ArrayList<Bookmark>();
@@ -400,35 +410,26 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 }
             }
         });
-    }
 
-    public void transcribeAudio(String filePath) {
-        new AsyncAudioTranscriptor(credentialsProvider, this).execute(filePath);
-    }
-
-    @Override
-    public void onTranscriptionCompleted(String transcript) {
-        transcriptTxt.setText(transcript);
-
-        // save the transcript to the database for future reference
-        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript, "vi");
-        curTranscript = newTranscript;
-
-        new Thread(new Runnable() {
+        btnSummarize.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                db.transcriptionFileDao().insert(newTranscript);
+            public void onClick(View v) {
+                if (curTranscript != null) {
+                    runOnUiThread(ToastExecutingSummary);
+                    exportTranscriptSummary();
+                }
             }
-        }).start();
-
-        toggleTranscriptButtons(2);
+        });
     }
 
-    @Override
-    public void onTranscriptionFailed() {
-        transcriptTxt.setText(R.string.transcript_failure);
-        toggleTranscriptButtons(1);
-    }
+    private Runnable ToastExecutingSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Summarizing transcript...", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
 
     @Override
     public void onItemClickListener(int position) {
@@ -485,6 +486,34 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 });
             }
         }).start();
+    }
+
+    public void transcribeAudio(String filePath) {
+        new AsyncAudioTranscriptor(credentialsProvider, this).execute(filePath);
+    }
+
+    @Override
+    public void onTranscriptionCompleted(String transcript) {
+        transcriptTxt.setText(transcript);
+
+        // save the transcript to the database for future reference
+        TranscriptionFile newTranscript = new TranscriptionFile(id, transcript, "vi");
+        curTranscript = newTranscript;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                db.transcriptionFileDao().insert(newTranscript);
+            }
+        }).start();
+
+        toggleTranscriptButtons(2);
+    }
+
+    @Override
+    public void onTranscriptionFailed() {
+        transcriptTxt.setText(R.string.transcript_failure);
+        toggleTranscriptButtons(1);
     }
 
     /**
@@ -554,6 +583,116 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         }).start();
     }
 
+    private Runnable ToastSuccessfulSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Summary saved to device's Downloads folder", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private Runnable ToastFailedSummary = new Runnable()
+    {
+        public void run()
+        {
+            Toast.makeText(AudioPlayerActivity.this, "Failed to summarize transcript, please try again later", Toast.LENGTH_SHORT)
+                    .show();
+        }
+    };
+
+    private void summaryExportHelper() {
+        if (curTranscript.getSummary().length() > 0) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                storagePermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+                if (!storagePermissionGranted) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 203);
+                }
+            }
+
+            File directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "acade.mic Summaries");
+
+            if (!directory.exists()) {
+                if (!directory.mkdirs()) {
+                    System.out.println("mkdirs failed");
+                    return;
+                }
+            }
+
+            int num = 1;
+            String fname = tvFilename.getText().toString().split("\\.")[0];
+            File file = new File(directory, fname + "_summary_" + curTranscript.getLangCode() + ".txt");
+
+            while(file.exists()) {
+                file = new File(directory, fname + "_summary_" + curTranscript.getLangCode() + "_" + (num++) + ".txt");
+            }
+
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(curTranscript.getSummary().getBytes());
+                this.runOnUiThread(ToastSuccessfulSummary);
+            } catch (IOException e) {
+                e.printStackTrace();
+                this.runOnUiThread(ToastFailedSummary);
+            }
+        }
+        else {
+            summarizeCurrentTranscript();
+        }
+    }
+
+    private void summarizeCurrentTranscript() {
+        final boolean[] summarizeSuccess = {false};
+
+        GenerativeModel gm = new GenerativeModel("gemini-pro", getString(R.string.cloud_api_key));
+        GenerativeModelFutures model = GenerativeModelFutures.from(gm);
+
+        Content content = new Content.Builder()
+                .addText("Summarize this text into bullet points, making sure that: THE SUMMARY IS IN THE SAME LANGUAGE AS THE TEXT PROVIDED AND NOT THE PROMPT, the wording is concise and easy to understand, and no numerical data point is left out: " + curTranscript.getContent().replace("\"", "\\\"").replace("\n", "\\n"))
+                .build();
+
+        ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
+        Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
+            @Override
+            public void onSuccess(GenerateContentResponse result) {
+                String summary = result.getText();
+
+                TranscriptionFile summarizedTranscript = new TranscriptionFile(id, curTranscript.getContent(), summary, curTranscript.getLangCode());
+                curTranscript = summarizedTranscript;
+                summaryExportHelper();
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        db.transcriptionFileDao().update(summarizedTranscript);
+                    }
+                }).start();
+
+                summarizeSuccess[0] = true;
+                toggleTranscriptButtons(2);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                t.printStackTrace();
+            }
+        }, this.getMainExecutor());
+    }
+
+    private void exportTranscriptSummary() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (curTranscript.getSummary().length() > 0) {
+                    summaryExportHelper();
+                }
+                else {
+                    summarizeCurrentTranscript();
+                }
+            }
+        }).start();
+    }
+
     private void fetchTranslatedTranscript(String targetLang) {
         new Thread(new Runnable() {
             @Override
@@ -580,7 +719,13 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             String result = translator.execute(getString(R.string.cloud_api_key), curTranscript.getContent(), curTranscript.getLangCode(), targetLang).get();
 
             if (!result.isEmpty()) {
-                transcriptTxt.setText(Html.fromHtml(result).toString());
+                // Update UI element on the main UI thread
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        transcriptTxt.setText(Html.fromHtml(result).toString());
+                    }
+                });
 
                 TranscriptionFile newTranscript = new TranscriptionFile(id, Html.fromHtml(result).toString(), targetLang);
                 curTranscript = newTranscript;
@@ -595,7 +740,12 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 toggleTranscriptButtons(2);
             }
             else {
-                transcriptTxt.setText(R.string.translate_failure);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        transcriptTxt.setText(R.string.translate_failure);
+                    }
+                });
                 toggleTranscriptButtons(1);
             }
         } catch (ExecutionException e) {

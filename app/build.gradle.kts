@@ -44,7 +44,6 @@ android {
 }
 
 dependencies {
-
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
@@ -62,4 +61,7 @@ dependencies {
     implementation("com.google.apis:google-api-services-translate:v2-rev20170525-2.0.0")
     implementation("com.google.http-client:google-http-client-jackson2:1.44.1")
 
+    implementation("com.google.ai.client.generativeai:generativeai:0.2.2")
+    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("androidx.concurrent:concurrent-futures:1.1.0")
 }

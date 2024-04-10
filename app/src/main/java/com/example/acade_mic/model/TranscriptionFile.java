@@ -7,6 +7,7 @@ import androidx.room.Entity;
 public class TranscriptionFile {
     private int audioId;
     private String content;
+    private String summary;
     @NonNull
     private String langCode = "";
 
@@ -15,6 +16,14 @@ public class TranscriptionFile {
     public TranscriptionFile(int audioId, String content, @NonNull String langCode) {
         this.audioId = audioId;
         this.content = content;
+        this.summary = "";
+        this.langCode = langCode;
+    }
+
+    public TranscriptionFile(int audioId, String content, String summary, @NonNull String langCode) {
+        this.audioId = audioId;
+        this.content = content;
+        this.summary = summary;
         this.langCode = langCode;
     }
 
@@ -32,6 +41,14 @@ public class TranscriptionFile {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
     }
 
     public String getLangCode() {
