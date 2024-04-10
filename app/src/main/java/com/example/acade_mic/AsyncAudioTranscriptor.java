@@ -18,15 +18,14 @@ import com.google.protobuf.ByteString;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class AsyncAudioTranscriptor extends AsyncTask<String, Void, String> {
-    private SpeechCredentialsProvider credentialsProvider;
+    private CloudCredentialsProvider credentialsProvider;
     private TranscriptionCallback callback;
 
-    public AsyncAudioTranscriptor(SpeechCredentialsProvider credentialsProvider, TranscriptionCallback callback) {
+    public AsyncAudioTranscriptor(CloudCredentialsProvider credentialsProvider, TranscriptionCallback callback) {
         this.credentialsProvider = credentialsProvider;
         this.callback = callback;
     }
