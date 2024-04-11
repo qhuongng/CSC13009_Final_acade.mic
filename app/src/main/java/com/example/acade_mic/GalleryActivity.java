@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
+    private String albName;
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
     private AppDatabase db;
@@ -58,8 +59,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
+        albName = getIntent().getStringExtra("albumName");
 
         toolbar = findViewById(R.id.toolbar);
+        toolbar.setTitle(albName);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null){
@@ -426,16 +429,32 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         new Thread(new Runnable() {
             @Override
             public void run() {
-                records.clear();
-                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
-                records.addAll(queryResult);
+                List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
 
+                records.clear();
+                if(!listRecID.isEmpty()){
+                    for (int id: listRecID)
+                    {
+                        AudioRecord temp = new AudioRecord();
+                        temp = db.audioRecordDao().getRecbyID(id);
+                        records.add(temp);
+                    }
+
+//                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
+//                records.addAll(queryResult);
+
+
+                }
+                else {
+                    records = new ArrayList<>();
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter.notifyDataSetChanged();
                     }
                 });
+
             }
         }).start();
     }

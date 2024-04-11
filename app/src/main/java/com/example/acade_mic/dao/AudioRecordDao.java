@@ -14,7 +14,8 @@ import java.util.List;
 public interface AudioRecordDao {
     @Query("SELECT * FROM audioRecords")
     List<AudioRecord> getAll();
-
+    @Query("SELECT * FROM audioRecords where id = :id")
+    AudioRecord getRecbyID(int id);
     @Query("SELECT * FROM audioRecords where filename like :query")
     List<AudioRecord> searchDatabase(String query);
     // "..."  indicates that the method can accept zero or more AudioRecord objects as arguments.

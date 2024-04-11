@@ -28,6 +28,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
@@ -127,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 "audioRecords"
         ).build();
         db = AppDatabase.getInstance(this);
+
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -164,7 +166,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            Intent intent = new Intent(this, GalleryActivity.class);
+//            Intent intent = new Intent(this, GalleryActivity.class);
+            Intent intent = new Intent(this, AlbumActivity.class);
             startActivity(intent);
 
         });
@@ -238,6 +241,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                     @Override
                     public void run() {
                         db.audioRecordDao().insert(record);
+                        Album temp = new Album("All Records");
+                        temp.setRecordID(record.getId());
+                        db.albumDao().insert(temp);
                     }
                 }).start();
                 Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
@@ -251,6 +257,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             public void run() {
                 List<AudioRecord> queryResult = db.audioRecordDao().getAll();
                 records.addAll(queryResult);
+//                db.albumDao().insert(new Album("All record",1));
+//                db.albumDao().insert(new Album("All record",2));
+//                db.albumDao().insert(new Album("All record",3));
+//                db.albumDao().insert(new Album("Album 1",2));
             }
         }).start();
     }

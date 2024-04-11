@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Tiêu đề -->
+    <TextView
+        android:id="@+id/textViewTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Album"
+        android:textSize="24sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- EditText để nhập tên album -->
+    <EditText
+        android:id="@+id/editTextAlbumName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Album Name"
+        android:layout_below="@id/textViewTitle"
+        android:layout_marginTop="16dp"/>
+
+    <!-- Button để chọn các tập tin -->
+    <Button
+        android:id="@+id/buttonSelectFiles"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Files"
+        android:layout_below="@id/editTextAlbumName"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
+
+    <!-- Nút Tạo Album -->
+    <Button
+        android:id="@+id/buttonCreateAlbum"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Album"
+        android:layout_below="@id/buttonSelectFiles"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"/>
+</RelativeLayout>
