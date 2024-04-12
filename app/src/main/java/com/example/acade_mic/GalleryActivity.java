@@ -96,6 +96,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         records = new ArrayList<>();
+        fetchAll();
 
         db = AppDatabase.getInstance(this);
 
@@ -106,7 +107,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         recyclerView.setAdapter(mAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        fetchAll();
+
         searchInput = findViewById(R.id.searchInput);
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -430,23 +431,20 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void run() {
                 List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
-
+                System.out.println(listRecID.size());
                 records.clear();
-                if(!listRecID.isEmpty()){
+                if(listRecID != null){
                     for (int id: listRecID)
                     {
                         AudioRecord temp = new AudioRecord();
                         temp = db.audioRecordDao().getRecbyID(id);
-                        records.add(temp);
+                        if(temp != null) records.add(temp);
                     }
 
 //                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
 //                records.addAll(queryResult);
 
 
-                }
-                else {
-                    records = new ArrayList<>();
                 }
                 runOnUiThread(new Runnable() {
                     @Override

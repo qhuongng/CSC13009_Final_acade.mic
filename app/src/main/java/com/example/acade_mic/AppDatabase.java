@@ -19,7 +19,7 @@ import com.example.acade_mic.model.ReviewAlarm;
 import com.example.acade_mic.model.TranscriptionFile;
 
 
-@Database(entities = {Album.class, AudioRecord.class, Bookmark.class, TranscriptionFile.class, Alarm.class, ReviewAlarm.class}, version = 7,exportSchema = false)
+@Database(entities = {Album.class, AudioRecord.class, Bookmark.class, TranscriptionFile.class, Alarm.class, ReviewAlarm.class}, version = 8,exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AudioRecordDao audioRecordDao();
     public abstract BookmarkDao bookmarkDao();

@@ -241,9 +241,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                     @Override
                     public void run() {
                         db.audioRecordDao().insert(record);
-                        Album temp = new Album("All Records");
-                        temp.setRecordID(record.getId());
-                        db.albumDao().insert(temp);
+                        AudioRecord temp = db.audioRecordDao().searchDatabase(record.getFilename()).get(0);
+                        Album alb = new Album("All Records");
+                        alb.setRecordID(temp.getId());
+                        db.albumDao().insert(alb);
                     }
                 }).start();
                 Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
