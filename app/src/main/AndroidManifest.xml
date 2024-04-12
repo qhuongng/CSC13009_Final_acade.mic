@@ -88,6 +88,8 @@
         <activity
             android:name=".NotifyAlarmActivity">
         </activity>
+        <service android:name=".ReviewAlarmService"
+            android:enabled="true"/>
     </application>
 
 </manifest>

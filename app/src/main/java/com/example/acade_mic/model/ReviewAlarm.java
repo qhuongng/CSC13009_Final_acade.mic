@@ -5,11 +5,11 @@ import androidx.room.Entity;
 @Entity(tableName = "reviewAlarm",primaryKeys = "recordId")
 public class ReviewAlarm {
     private int recordId;
-    private boolean isAlarm;
+    private long startTime;
     public ReviewAlarm(){}
-    public ReviewAlarm(int id){
+    public ReviewAlarm(int id , long time){
         recordId = id;
-        isAlarm = false;
+        startTime = time;
     }
 
     public int getRecordId() {
@@ -20,11 +20,11 @@ public class ReviewAlarm {
         this.recordId = recordId;
     }
 
-    public boolean isAlarm() {
-        return isAlarm;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public void setAlarm(boolean alarm) {
-        isAlarm = alarm;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 }

@@ -9,6 +9,10 @@ import com.example.acade_mic.model.ReviewAlarm;
 
 @Dao
 public interface ReviewAlarmDao {
+
+    @Query("Select * from reviewAlarm where recordId = :audioId")
+    ReviewAlarm getReviewAlarm(int audioId);
+
     @Insert
     void insert(ReviewAlarm...reviewAlarms);
 

@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.NumberPicker;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,7 +17,7 @@ import java.util.Locale;
 
 public class NotifyAlarmActivity extends AppCompatActivity {
     final Calendar myCalendar = Calendar.getInstance();
-    Button addBtn;
+    ImageButton addBtn;
     EditText startDate;
     AppDatabase db;
 
@@ -70,6 +71,7 @@ public class NotifyAlarmActivity extends AppCompatActivity {
         startSec.setMaxValue(secData.length - 1);
         startSec.setDisplayedValues(secData);
 
+        addBtn = findViewById(R.id.btnCreate);
 
     }
     private void updateLabel() {

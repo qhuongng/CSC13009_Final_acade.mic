@@ -10,8 +10,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.DatePickerDialog;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
 import android.os.Build;
@@ -23,21 +29,27 @@ import android.text.Html;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.acade_mic.adapter.BookmarkAdapter;
+import com.example.acade_mic.model.AudioRecord;
 import com.example.acade_mic.model.Bookmark;
+import com.example.acade_mic.model.ReviewAlarm;
 import com.example.acade_mic.model.TranscriptionFile;
 import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
 import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.chip.Chip;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -50,9 +62,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -61,6 +82,14 @@ import java.util.concurrent.Executors;
 public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
     private MediaPlayer mediaPlayer;
     private MaterialToolbar toolbar;
+    private View editbar;
+    private ImageButton btnClose;
+    private LinearLayout bottomSheet;
+    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+    private ImageButton btnReviewAlarm;
+    final Calendar myCalendar = Calendar.getInstance();
+    ImageButton addBtn;
+    EditText startDate;
     private TextView tvFilename;
     private TextView tvTrackProgress;
     private TextView tvTrackDuration;
@@ -93,6 +122,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     // audio file's id
     private int id;
     public static boolean storagePermissionGranted;
+    ReviewAlarm check = null;
 
     String[] langSpinner = { "Tiếng Việt (default)", "English (US)", "日本語", "한국어", "中文", "Français", "Español", "Deutsch" };
     String[] langCodes = { "vi", "en", "ja", "ko", "zh", "fr", "es", "de"};
@@ -152,6 +182,165 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         transcriptTxt = findViewById(R.id.transcriptTxt);
 
         spLang = findViewById(R.id.spLang);
+
+        bottomSheet = findViewById(R.id.bottomSheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+        bottomSheet.setVisibility(View.GONE);
+        btnClose = findViewById(R.id.btnClose);
+        editbar = findViewById(R.id.editBar);
+        startDate = findViewById(R.id.startDate);
+        DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                myCalendar.set(Calendar.YEAR, year);
+                myCalendar.set(Calendar.MONTH,month);
+                myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                updateLabel();
+            }
+        };
+
+        startDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new DatePickerDialog(AudioPlayerActivity.this, date, myCalendar.get(Calendar.YEAR), myCalendar.get(Calendar.MONTH), myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+        NumberPicker startHour = (NumberPicker) findViewById(R.id.startHour);
+        String[] hourData = new String[24];
+        for (int i = 0; i <= 23; i++) {
+            hourData[i] = String.valueOf(i).length() < 2 ? ("0" + String.valueOf(i)) : String.valueOf(i);
+        }
+        startHour.setMinValue(0);
+        startHour.setMaxValue(hourData.length - 1);
+        startHour.setDisplayedValues(hourData);
+
+        NumberPicker startMin = (NumberPicker) findViewById(R.id.startMin);
+        String[] minData = new String[60];
+        for (int i = 0; i <= 59; i++) {
+            minData[i] = String.valueOf(i).length() < 2 ? ("0" + String.valueOf(i)) : String.valueOf(i);
+        }
+        startMin.setMinValue(0);
+        startMin.setMaxValue(minData.length - 1);
+        startMin.setDisplayedValues(minData);
+
+        NumberPicker startSec = (NumberPicker) findViewById(R.id.startSec);
+        String[] secData = new String[60];
+        for (int i = 0; i <= 59; i++) {
+            secData[i] = String.valueOf(i).length() < 2 ? ("0" + String.valueOf(i)) : String.valueOf(i);
+        }
+        startSec.setMinValue(0);
+        startSec.setMaxValue(secData.length - 1);
+        startSec.setDisplayedValues(secData);
+
+        addBtn = findViewById(R.id.btnCreate);
+        addBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String startDateTime = startDate.getText().toString() + " " + formatTime(startHour.getValue(), startMin.getValue(), startSec.getValue());
+                LocalDateTime localDateTime = LocalDateTime.parse(startDateTime,
+                        DateTimeFormatter.ofPattern("dd/MM/yyy HH:mm:ss"));
+
+                long startTimeMillis = localDateTime
+                        .atZone(ZoneId.systemDefault())
+                        .toInstant().toEpochMilli();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        check = db.reviewAlarmDao().getReviewAlarm(id);
+                    }
+                }).start();
+                if(check!= null && check.getStartTime() == startTimeMillis){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getBaseContext(),"This Alarm have already exists",Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    Intent intent = new Intent(getBaseContext(),ReviewAlarmService.class);
+                    intent.putExtra("filename", fileName);
+                    PendingIntent pendingIntent = PendingIntent.getService(getBaseContext(),0,intent,PendingIntent.FLAG_IMMUTABLE);
+                    AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, startTimeMillis, pendingIntent);
+                    ReviewAlarm rv = new ReviewAlarm(id, startTimeMillis);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            db.reviewAlarmDao().deleteAlarmByRecordId(id);
+                            db.reviewAlarmDao().insert(rv);
+                        }
+                    }).start();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getBaseContext(),"Create ReviewAlarm success",Toast.LENGTH_SHORT).show();
+                            leaveAlarmReview();
+                            btnReviewAlarm.setImageTintList(ContextCompat.getColorStateList(getBaseContext(), R.color.disabledDarkGray));
+                        }
+                    });
+                }
+            }
+        });
+
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                leaveAlarmReview();
+            }
+        });
+
+        btnReviewAlarm = findViewById(R.id.reviewAlarm);
+        btnReviewAlarm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ReviewAlarm reviewAlarm = db.reviewAlarmDao().getReviewAlarm(id);
+                        if(reviewAlarm != null){
+                            long time = reviewAlarm.getStartTime();
+                            if(time + 120L*1000L > System.currentTimeMillis()){
+                                Instant instant = Instant.ofEpochMilli(time);
+                                LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+                                // Lấy giá trị ngày và giờ từ LocalDateTime
+                                LocalDate checkDay = localDateTime.toLocalDate();
+                                LocalTime checkTime = localDateTime.toLocalTime();
+                                String month = (checkDay.getMonthValue() < 10) ? "0" + checkDay.getMonthValue() : String.valueOf(checkDay.getMonthValue());
+                                String day = (checkDay.getDayOfMonth() < 10) ? "0" + checkDay.getDayOfMonth() : String.valueOf(checkDay.getDayOfMonth());
+                                String date = day + "/" + month + "/" + checkDay.getYear();
+                                startDate.setText(date);
+                                startHour.setValue(checkTime.getHour());
+                                startMin.setValue(checkTime.getMinute());
+                                startSec.setValue(checkTime.getSecond());
+                            } else {
+                                db.reviewAlarmDao().deleteAlarmByRecordId(id);
+                            }
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                bottomSheet.setVisibility(View.VISIBLE);
+                                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                                if(editbar.getVisibility() == View.GONE){
+                                    ActionBar actionBar = getSupportActionBar();
+                                    if(actionBar != null){
+                                        actionBar.setDisplayHomeAsUpEnabled(false);
+                                        actionBar.setDisplayShowHomeEnabled(false);
+                                    }
+                                    editbar.setVisibility(View.VISIBLE);
+                                }
+                            }
+                        });
+
+                    }
+                }).start();
+
+
+            }
+        });
+
         ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, langSpinner);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spLang.setAdapter(adapter);
@@ -224,7 +413,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
                                 mediaPlayer.start();
                             }  else {
-                            // Người dùng không nhập ghi chú, bạn có thể xử lý ở đây
+                            // Người dùng không nhập ghi chú
                             Toast.makeText(AudioPlayerActivity.this, "Please enter a note", Toast.LENGTH_SHORT).show();
                                 mediaPlayer.start();
                             }
@@ -304,7 +493,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             }
         };
 
-            tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
 
         seekBar.setMax(mediaPlayer.getDuration());
         //thay đổi icon play khi phát xong
@@ -420,6 +609,31 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 }
             }
         });
+    }
+
+    private String formatTime(int hour, int min, int sec) {
+        String hourStr = String.valueOf(hour).length() < 2 ? ("0" + hour) : String.valueOf(hour);
+        String minStr = String.valueOf(min).length() < 2 ? ("0" + min) : String.valueOf(min);
+        String secStr = String.valueOf(sec).length() < 2 ? ("0" + sec) : String.valueOf(sec);
+        return hourStr + ":" + minStr + ":" + secStr;
+    }
+
+    private void updateLabel() {
+        String myFormat = "dd/MM/yyyy";
+        SimpleDateFormat dateFormat = new SimpleDateFormat(myFormat, Locale.US);
+        startDate.setText(dateFormat.format(myCalendar.getTime()));
+    }
+
+    private void leaveAlarmReview() {
+        bottomSheetBehavior.setState(bottomSheetBehavior.STATE_HIDDEN);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowHomeEnabled(true);
+        }
+
+        editbar.setVisibility(View.GONE);
+        bottomSheet.setVisibility(View.GONE);
     }
 
     private Runnable ToastExecutingSummary = new Runnable()

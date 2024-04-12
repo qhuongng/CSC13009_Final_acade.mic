@@ -90,7 +90,7 @@
         android:layout_gravity="center"
         >
         <ImageButton
-            android:id="@+id/btnDelete"
+            android:id="@+id/btnCreate"
             android:clickable="false"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -100,7 +100,7 @@
             android:layout_gravity="center"/>
 
         <TextView
-            android:id="@+id/tvDelete"
+            android:id="@+id/tvAccept"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"

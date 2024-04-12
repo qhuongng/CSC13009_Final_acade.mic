@@ -13,6 +13,7 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.room.Room;
 
 import com.example.acade_mic.model.AudioRecord;
@@ -26,7 +27,9 @@ import java.util.Locale;
 
 public class RecordForegroundService extends Service implements Timer.OnTimerTickListener {
     private static final String CHANNEL_ID = "myChannel";
+    private static final String CHANNEL_REVIEW_ID = "rvChannel";
     private static final int NOTIFICATION_ID = 169;
+    private static final int NOTIFICATION_REVIEW_ID = 170;
     private static final int NOTI_REQUEST_CODE = 269;
     public MediaRecorder recorder;
 
