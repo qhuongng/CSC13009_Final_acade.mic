@@ -230,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 if(newFileName.equals(record.getFilename())) check++;
             }
             if(check > 0) {
-                Toast.makeText(this, "File name has been exists", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "File name has existed", Toast.LENGTH_SHORT).show();
             } else {
             String newFilePath = recordService.path + newFileName;
             long timestamp = new Date().getTime();

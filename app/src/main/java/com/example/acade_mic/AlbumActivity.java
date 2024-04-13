@@ -33,6 +33,7 @@ import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -48,24 +49,19 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
     private MaterialToolbar toolbar;
     private View editbar;
     private ImageButton btnClose;
-    private ImageButton btnSelectAll;
-    private boolean allChecked = false;
     private ImageButton btnRename;
     private ImageButton btnDelete;
-    private ImageButton btnShare;
-    private ImageButton btnEditAudio;
-    private TextView tvRename;
-    private TextView tvDelete;
-    private TextView tvShare;
-    private TextView tvEditAudio;
-    private ImageButton btnCreateAlbum;
+
+    private FloatingActionButton btnCreateAlbum;
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
-    private LinearLayout bottomSheet;
+    private BottomSheetBehavior<LinearLayout> editSheetBehavior;
+    private LinearLayout editSheet;
     private View bottomSheetBG;
     private MaterialButton btnCancel;
     private MaterialButton btnCreate;
     private TextInputEditText fileNameInput;
-    private String fileName;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,28 +83,38 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
 
         btnRename = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
-        btnShare = findViewById(R.id.btnShare);
 
-        btnEditAudio = findViewById(R.id.btnEditAudio);
-        tvRename = findViewById(R.id.tvEdit);
-        tvDelete = findViewById(R.id.tvDelete);
-        tvShare = findViewById(R.id.tvShare);
-        tvEditAudio = findViewById(R.id.tvEditAudio);
 
+
+        fileNameInput = findViewById(R.id.filenameInput);
 
         editbar = findViewById(R.id.editBar);
         btnClose = findViewById(R.id.btnClose);
-        btnSelectAll = findViewById(R.id.btnSelectAll);
+        btnClose.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ActionBar actionBar = getSupportActionBar();
+                if(actionBar != null){
+                    actionBar.setDisplayHomeAsUpEnabled(true);
+                    actionBar.setDisplayShowHomeEnabled(true);
+                }
+                editbar.setVisibility(View.GONE);
+                editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            }
+        });
         btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
         btnCreate = (MaterialButton) findViewById(R.id.btnCreate);
-        btnCreateAlbum = (ImageButton) findViewById(R.id.btnCreateAlbum);
+        btnCreateAlbum = (FloatingActionButton) findViewById(R.id.btnCreateAlbum);
         btnCreateAlbum.setOnClickListener((View v) -> {
-
+            fileNameInput.setText("");
             bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
             bottomSheetBG.setVisibility(View.VISIBLE);
 
         });
 
+        editSheet = findViewById(R.id.editSheet);
+        editSheetBehavior = BottomSheetBehavior.from(editSheet);
+        editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheet));
         bottomSheetBehavior.setPeekHeight(0);
@@ -124,7 +130,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
 
         btnCreate.setOnClickListener((View v) -> {
             dismiss();
-            //create();
+            create();
         });
 
         bottomSheetBG.setOnClickListener((View v) -> {
@@ -170,6 +176,38 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         searchInput = findViewById(R.id.searchInput);
     }
 
+    public void create(){
+        String newAlbumName = fileNameInput.getText().toString();
+        if(!newAlbumName.equals("")) {
+            int check = 0;
+            for (String s : albumNames) {
+                if (s.equals(newAlbumName)) check++;
+            }
+            if (check > 0)
+                Toast.makeText(this, "Album name has existed", Toast.LENGTH_SHORT).show();
+            else {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Album tmp = new Album(newAlbumName);
+                        db.albumDao().insert(tmp);
+                        albumNames.add(newAlbumName);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAdapter.notifyDataSetChanged();
+                            }
+
+                        });
+                    }
+
+                }).start();
+                Toast.makeText(this, "Create album successfully", Toast.LENGTH_SHORT).show();
+            }
+        }else {
+            Toast.makeText(this, "Album name can not be empty", Toast.LENGTH_SHORT).show();
+        }
+    }
     public void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(fileNameInput);
@@ -199,6 +237,12 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
 
     @Override
     public void onItemLongClickListener(int position) {
-
+        editSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+        editbar.setVisibility(View.VISIBLE);
+        ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(false);
+            actionBar.setDisplayShowHomeEnabled(false);
+        }
     }
 }
