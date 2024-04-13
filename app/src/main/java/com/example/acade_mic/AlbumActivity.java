@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AlbumActivity extends AppCompatActivity implements OnItemClickListener {
+    private String selectedAlbum;
 
     private ArrayList<String> albumNames;
     private AlbumAdapter mAdapter;
@@ -83,7 +84,102 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
 
         btnRename = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(AlbumActivity.this);
+                builder.setTitle("Delete album?");
+                builder.setMessage("Are you sure you want to delete this album?(All records in this album will be deleted!");
 
+                builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!selectedAlbum.equals("") && !selectedAlbum.isEmpty()) {
+                            if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Delete")) {
+                                Toast.makeText(AlbumActivity.this, "Unable to delete default album!", Toast.LENGTH_SHORT).show();
+                            } else {
+                                ArrayList<Integer> recID = new ArrayList<>();
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        List<Integer>listID = db.albumDao().getAllrecordIDbyAlbumName(selectedAlbum);
+                                        if(!listID.isEmpty()) {
+                                            recID.addAll(listID);
+                                        }
+                                    }
+                                }).start();
+
+                                if(!recID.isEmpty()){
+                                    ArrayList<AudioRecord> toDelList = new ArrayList<>();
+                                    new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            for(int id:recID){
+                                                System.out.println(id);
+                                                AudioRecord toDelete = db.audioRecordDao().getRecbyID(id);
+                                                toDelList.add(toDelete);
+                                            }
+                                        }
+                                    }).start();
+
+                                    if(!toDelList.isEmpty()) {
+                                        new Thread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                for (AudioRecord tmp : toDelList) {
+                                                    File delFile = new File(tmp.getFilePath());
+                                                    if (delFile != null) delFile.delete();
+                                                    db.audioRecordDao().delete(tmp);
+                                                    db.bookmarkDao().deleteBookmarksByRecordId(tmp.getId());
+                                                }
+                                            }
+                                        }).start();
+
+                                    }
+                                }
+
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        db.albumDao().deletebyAlbumName(selectedAlbum);
+
+                                    }
+                                }).start();
+
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        albumNames.remove(selectedAlbum);
+                                        mAdapter.notifyDataSetChanged();
+                                        ActionBar actionBar = getSupportActionBar();
+                                        if(actionBar != null){
+                                            actionBar.setDisplayHomeAsUpEnabled(true);
+                                            actionBar.setDisplayShowHomeEnabled(true);
+                                        }
+                                        editbar.setVisibility(View.GONE);
+                                        editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                                        Toast.makeText(AlbumActivity.this,"Delete album successfully!",Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+                        }
+
+
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // it does nothing
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
 
 
         fileNameInput = findViewById(R.id.filenameInput);
@@ -244,5 +340,6 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             actionBar.setDisplayHomeAsUpEnabled(false);
             actionBar.setDisplayShowHomeEnabled(false);
         }
+        selectedAlbum = albumNames.get(position);
     }
 }

@@ -117,19 +117,18 @@
             >
             <ImageButton
                 android:id="@+id/btnDelete"
-                android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_round_delete"
-                app:tint="@color/disabledDarkGray"
+                app:tint="@color/darkGray"
                 android:layout_gravity="center"/>
 
             <TextView
                 android:id="@+id/tvDelete"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/disabledDarkGray"
+                android:textColor="@color/darkGray"
                 android:text="Delete"/>
         </LinearLayout>
         <LinearLayout
@@ -140,17 +139,16 @@
             android:gravity="center">
             <ImageButton
                 android:id="@+id/btnEdit"
-                android:clickable="false"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?selectableItemBackgroundBorderless"
                 android:src="@drawable/ic_round_edit"
-                app:tint="@color/disabledDarkGray" />
+                app:tint="@color/darkGray" />
             <TextView
                 android:id="@+id/tvEdit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/disabledDarkGray"
+                android:textColor="@color/darkGray"
                 android:text="Rename"/>
         </LinearLayout>
     </LinearLayout>

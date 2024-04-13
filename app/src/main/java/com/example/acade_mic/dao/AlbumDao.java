@@ -1,11 +1,13 @@
 package com.example.acade_mic.dao;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
 import com.example.acade_mic.model.Album;
+import com.example.acade_mic.model.AudioRecord;
 import com.example.acade_mic.model.Bookmark;
 
 import java.util.ArrayList;
@@ -24,4 +26,7 @@ public interface AlbumDao {
 
     @Update
     void update(Album album);
+
+    @Query("DELETE FROM albums WHERE albumName =:name")
+    void deletebyAlbumName(String name);
 }
