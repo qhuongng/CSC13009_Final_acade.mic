@@ -5,6 +5,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -30,6 +32,7 @@ import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
@@ -42,8 +45,6 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
     private AlbumAdapter mAdapter;
     private AppDatabase db;
     private TextInputEditText searchInput;
-    private LinearLayout bottomSheet;
-    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
     private MaterialToolbar toolbar;
     private View editbar;
     private ImageButton btnClose;
@@ -57,7 +58,14 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
     private TextView tvDelete;
     private TextView tvShare;
     private TextView tvEditAudio;
-
+    private ImageButton btnCreateAlbum;
+    private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
+    private LinearLayout bottomSheet;
+    private View bottomSheetBG;
+    private MaterialButton btnCancel;
+    private MaterialButton btnCreate;
+    private TextInputEditText fileNameInput;
+    private String fileName;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,10 +99,39 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         editbar = findViewById(R.id.editBar);
         btnClose = findViewById(R.id.btnClose);
         btnSelectAll = findViewById(R.id.btnSelectAll);
+        btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
+        btnCreate = (MaterialButton) findViewById(R.id.btnCreate);
+        btnCreateAlbum = (ImageButton) findViewById(R.id.btnCreateAlbum);
+        btnCreateAlbum.setOnClickListener((View v) -> {
 
-        bottomSheet = findViewById(R.id.bottomSheet);
-        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+            bottomSheetBG.setVisibility(View.VISIBLE);
+
+        });
+
+
+        bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomSheet));
+        bottomSheetBehavior.setPeekHeight(0);
+
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        bottomSheetBG = (View) findViewById(R.id.bottomSheetBG);
+
+        btnCancel.setOnClickListener((View v) -> {
+            // delete file
+            //
+            dismiss();
+        });
+
+        btnCreate.setOnClickListener((View v) -> {
+            dismiss();
+            //create();
+        });
+
+        bottomSheetBG.setOnClickListener((View v) -> {
+            // delete file
+            //
+            dismiss();
+        });
 
         albumNames = new ArrayList<>();
         db = AppDatabase.getInstance(this);
@@ -133,6 +170,19 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         searchInput = findViewById(R.id.searchInput);
     }
 
+    public void dismiss() {
+        bottomSheetBG.setVisibility(View.GONE);
+        hideKeyBoard(fileNameInput);
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        }, 500);
+    }
+
+    public void hideKeyBoard(View v) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+    }
     @Override
     public void onItemClickListener(int position) {
         try {
