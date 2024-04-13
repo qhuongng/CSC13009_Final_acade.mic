@@ -247,7 +247,6 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         try {
             recorder.prepare();
         } catch (IOException e) {

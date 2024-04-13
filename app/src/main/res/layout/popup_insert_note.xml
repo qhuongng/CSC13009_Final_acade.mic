@@ -1,7 +1,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/bottom_sheet_behavior">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -9,40 +11,49 @@
         android:layout_marginTop="8dp"
         android:orientation="horizontal">
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your note"
-            android:textSize="17dp"
-            android:layout_marginStart="10dp"
-            />
-
-        <ImageButton
-            android:id="@+id/btnCancel"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
-            android:layout_marginStart="225dp"
-
-            android:background="@drawable/ic_close_mini" />
-    </LinearLayout>
-        <View
             android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/black" />
-    <EditText
-        android:id="@+id/editTextNote"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Your note"
+            android:textSize="24sp"
+            android:textAlignment="center" />
+    </LinearLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/TextLayoutStyle"
         android:layout_width="match_parent"
-        android:layout_height="147dp"
-        android:paddingStart="8dp"
-        android:hint="Enter your note here"
+        android:layout_height="wrap_content">
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/editTextNote"
+            android:layout_margin="16dp"
+            android:padding="16dp"
+            />
+    </com.google.android.material.textfield.TextInputLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="Cancel"
+            android:backgroundTint="@color/gray"
+            android:textColor="@color/darkGray"
+            app:cornerRadius="26dp"
+            app:rippleColor="@color/darkGray"/>
 
-        android:selectAllOnFocus="true" />
-
-    <ImageButton
-        android:id="@+id/btnSaveNote"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_marginStart="308dp"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/ic_check" />
-
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveNote"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="Save"
+            android:layout_marginStart="20dp"
+            android:backgroundTint="@color/strokeColor"
+            android:textColor="@color/white"
+            app:cornerRadius="26dp"
+            app:rippleColor="@color/darkGray"/>
+    </LinearLayout>
 </LinearLayout>

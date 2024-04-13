@@ -50,7 +50,9 @@ import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -380,10 +382,10 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     // setup for note
                     AlertDialog.Builder alertDialog = new AlertDialog.Builder(AudioPlayerActivity.this);
                     View popupView = getLayoutInflater().inflate(R.layout.popup_insert_note, null);
-                    EditText editTextNote = popupView.findViewById(R.id.editTextNote);
+                    TextInputEditText editTextNote = popupView.findViewById(R.id.editTextNote);
 
-                    ImageButton saveBtn = popupView.findViewById(R.id.btnSaveNote);
-                    ImageButton cancelBtn = popupView.findViewById(R.id.btnCancel);
+                    MaterialButton saveBtn = popupView.findViewById(R.id.btnSaveNote);
+                    MaterialButton cancelBtn = popupView.findViewById(R.id.btnCancel);
                     alertDialog.setView(popupView);
                     AlertDialog dialog = alertDialog.create();
                     dialog.show();
@@ -411,7 +413,9 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                                 }).start();
                                 recyclerView.smoothScrollToPosition(bookmarks.size());
 
-                                mediaPlayer.start();
+                                if (!mediaPlayer.isPlaying()) {
+                                    mediaPlayer.start();
+                                }
                             }  else {
                             // Người dùng không nhập ghi chú
                             Toast.makeText(AudioPlayerActivity.this, "Please enter a note", Toast.LENGTH_SHORT).show();
