@@ -161,5 +161,8 @@
         android:id="@+id/bottomSheetBG"
         android:background="@color/opaqueBG"/>
 
+
     <include layout="@layout/createalbum_sheet"/>
+    <include layout="@layout/rename_album_layout"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

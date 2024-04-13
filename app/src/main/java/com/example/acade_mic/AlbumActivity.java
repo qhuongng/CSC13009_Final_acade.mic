@@ -56,11 +56,17 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
     private FloatingActionButton btnCreateAlbum;
     private BottomSheetBehavior<LinearLayout> bottomSheetBehavior;
     private BottomSheetBehavior<LinearLayout> editSheetBehavior;
+    private BottomSheetBehavior<LinearLayout> renameSheetBehavior;
+
+
     private LinearLayout editSheet;
     private View bottomSheetBG;
     private MaterialButton btnCancel;
     private MaterialButton btnCreate;
+    private MaterialButton btnRenameAlbum;
+    private MaterialButton btnCancelRename;
     private TextInputEditText fileNameInput;
+    private TextInputEditText renameAlbInput;
 
 
     @Override
@@ -82,7 +88,66 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             }
         });
 
+        renameAlbInput= findViewById(R.id.renameAlbInput);
+        renameSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.renameAlbumSheet));
+        renameSheetBehavior.setPeekHeight(0);
+
+        renameSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+        bottomSheetBG = (View) findViewById(R.id.bottomSheetBG);
         btnRename = findViewById(R.id.btnEdit);
+        btnRename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!selectedAlbum.equals("") && !selectedAlbum.isEmpty()) {
+                    if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Delete")) {
+                        Toast.makeText(AlbumActivity.this, "Unable to rename default album!", Toast.LENGTH_SHORT).show();
+                    } else {
+
+                        renameAlbInput.setText(selectedAlbum);
+                        renameSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+                        bottomSheetBG.setVisibility(View.VISIBLE);
+                        ActionBar actionBar = getSupportActionBar();
+                        if(actionBar != null){
+                            actionBar.setDisplayHomeAsUpEnabled(true);
+                            actionBar.setDisplayShowHomeEnabled(true);
+                        }
+                        editbar.setVisibility(View.GONE);
+                        editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    }
+                }
+            }
+        });
+
+        btnRenameAlbum = findViewById(R.id.btnRenameAlb);
+        btnRenameAlbum.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetBG.setVisibility(View.GONE);
+                hideKeyBoard(renameAlbInput);
+
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    renameSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }, 500);
+
+                rename();
+                Toast.makeText(AlbumActivity.this, "Rename album successfully", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        btnCancelRename=findViewById(R.id.btnCancelRename);
+        btnCancelRename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bottomSheetBG.setVisibility(View.GONE);
+                hideKeyBoard(fileNameInput);
+
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    renameSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                }, 500);
+            }
+        });
+
+
         btnDelete = findViewById(R.id.btnDelete);
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -198,8 +263,8 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                 editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
-        btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
-        btnCreate = (MaterialButton) findViewById(R.id.btnCreate);
+
+
         btnCreateAlbum = (FloatingActionButton) findViewById(R.id.btnCreateAlbum);
         btnCreateAlbum.setOnClickListener((View v) -> {
             fileNameInput.setText("");
@@ -217,6 +282,8 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
 
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         bottomSheetBG = (View) findViewById(R.id.bottomSheetBG);
+        btnCancel = findViewById(R.id.btnCancel);
+        btnCreate = findViewById(R.id.btnCreate);
 
         btnCancel.setOnClickListener((View v) -> {
             // delete file
@@ -331,6 +398,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         }
     }
 
+
     @Override
     public void onItemLongClickListener(int position) {
         editSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -341,5 +409,35 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             actionBar.setDisplayShowHomeEnabled(false);
         }
         selectedAlbum = albumNames.get(position);
+    }
+    public void rename(){
+
+        String newAlbumName = renameAlbInput.getText().toString();
+        if (!newAlbumName.equals("")) {
+            int check = 0;
+            for (String s : albumNames) {
+                if (s.equals(newAlbumName)) check++;
+            }
+            if (check > 0)
+                Toast.makeText(AlbumActivity.this, "Album name has existed", Toast.LENGTH_SHORT).show();
+            else {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int tmp = albumNames.indexOf(selectedAlbum);
+                        albumNames.set(tmp, newAlbumName);
+                        db.albumDao().updateAlbumName(selectedAlbum, newAlbumName);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mAdapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+
+                }).start();
+            }
+        }
+
     }
 }

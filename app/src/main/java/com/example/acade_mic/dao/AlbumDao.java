@@ -29,4 +29,8 @@ public interface AlbumDao {
 
     @Query("DELETE FROM albums WHERE albumName =:name")
     void deletebyAlbumName(String name);
+
+    @Query("UPDATE albums SET albumName = :newAlbumName WHERE albumName = :albumName")
+    void updateAlbumName(String albumName, String newAlbumName);
+
 }
