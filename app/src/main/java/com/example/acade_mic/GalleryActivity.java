@@ -370,21 +370,25 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnEditAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Find the selected audio record
-                AudioRecord audioRecord = null;
+                // Find all selected audio records
+                ArrayList<AudioRecord> selectedRecords = new ArrayList<>();
                 for (AudioRecord record : records) {
                     if (record.isChecked()) {
-                        audioRecord = record;
-                        break;
+                        selectedRecords.add(record);
                     }
                 }
-
                 // Check if any audio record is selected
-                if (audioRecord != null) {
-                    // Start EditAudioActivity with the file path and filename as extras
+                if (!selectedRecords.isEmpty()) {
+                    // Start EditAudioActivity with the list of file paths and filenames as extras
                     Intent intent = new Intent(GalleryActivity.this, EditAudioActivity.class);
-                    intent.putExtra("filepath", audioRecord.getFilePath());
-                    intent.putExtra("filename", audioRecord.getFilename());
+                    ArrayList<String> filepaths = new ArrayList<>();
+                    ArrayList<String> filenames = new ArrayList<>();
+                    for (AudioRecord record : selectedRecords) {
+                        filepaths.add(record.getFilePath());
+                        filenames.add(record.getFilename());
+                    }
+                    intent.putStringArrayListExtra("filepaths", filepaths);
+                    intent.putStringArrayListExtra("filenames", filenames);
                     startActivity(intent);
                 } else {
                     // If no audio record is selected, display a message
@@ -392,6 +396,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 }
             }
         });
+
 
     }
     private void hideKeyBoard(View v){
@@ -542,7 +547,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         disableRename();
                         enableDelete();
                         disableShare();
-                        disableEdit();
+                        enableEdit();
                 }
 
             } else {
