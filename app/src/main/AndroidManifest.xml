@@ -33,6 +33,7 @@
             android:name=".AlarmActivity"
             android:exported="false" />
 
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -66,7 +67,11 @@
         <activity
             android:name=".GalleryActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".AlbumActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

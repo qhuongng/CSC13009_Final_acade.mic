@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
+    private String albName;
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
     private AppDatabase db;
@@ -58,8 +59,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
+        albName = getIntent().getStringExtra("albumName");
 
         toolbar = findViewById(R.id.toolbar);
+        toolbar.setTitle(albName);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null){
@@ -93,6 +96,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         records = new ArrayList<>();
+        fetchAll();
 
         db = AppDatabase.getInstance(this);
 
@@ -103,7 +107,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         recyclerView.setAdapter(mAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        fetchAll();
+
         searchInput = findViewById(R.id.searchInput);
         searchInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -188,7 +192,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 if(delFile != null)  delFile.delete();
                             }
                         }
-
                         new Thread(new Runnable() {
                             @Override
                             public void run() {
@@ -360,6 +363,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
     }
 
+
+
     private void disableRename() {
         btnRename.setClickable(false);
         btnRename.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
@@ -425,16 +430,29 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         new Thread(new Runnable() {
             @Override
             public void run() {
+                List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
+                System.out.println(listRecID.size());
                 records.clear();
-                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
-                records.addAll(queryResult);
+                if(listRecID != null){
+                    for (int id: listRecID)
+                    {
+                        AudioRecord temp = new AudioRecord();
+                        temp = db.audioRecordDao().getRecbyID(id);
+                        if(temp != null) records.add(temp);
+                    }
 
+//                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
+//                records.addAll(queryResult);
+
+
+                }
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         mAdapter.notifyDataSetChanged();
                     }
                 });
+
             }
         }).start();
     }
