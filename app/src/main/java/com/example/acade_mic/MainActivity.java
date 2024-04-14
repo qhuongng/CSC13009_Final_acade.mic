@@ -15,6 +15,7 @@ import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,6 +28,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.Album;
+import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
@@ -77,13 +80,11 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if(recordService != null && recordService.isRecording && recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD PAUSE");
             pauseRec(FROM_WIDGET);
             syncPauseTime();
         }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD RESUME");
             resumeRec(FROM_WIDGET);
         }
     }
@@ -94,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if (db.isOpen()) {
             db.close();
         }
+
+        Toast.makeText(this, "destroyed", Toast.LENGTH_SHORT).show();
 
         super.onDestroy();
     }
@@ -125,6 +128,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 "audioRecords"
         ).build();
         db = AppDatabase.getInstance(this);
+
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -162,7 +166,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            Intent intent = new Intent(this, GalleryActivity.class);
+//            Intent intent = new Intent(this, GalleryActivity.class);
+            Intent intent = new Intent(this, AlbumActivity.class);
             startActivity(intent);
 
         });
@@ -207,7 +212,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
+        Button schedulerBtn = (Button) findViewById(R.id.schedulerBtn);
+        schedulerBtn.setOnClickListener((View v)->{
+            Intent startSchedulerIntent = new Intent(this, AlarmActivity.class);
+            startActivity(startSchedulerIntent);
+        });
     }
+
 
     public void save() {
         String newFileName = fileNameInput.getText().toString();
@@ -219,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 if(newFileName.equals(record.getFilename())) check++;
             }
             if(check > 0) {
-                Toast.makeText(this, "File name has been exists", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "File name has existed", Toast.LENGTH_SHORT).show();
             } else {
             String newFilePath = recordService.path + newFileName;
             long timestamp = new Date().getTime();
@@ -230,6 +241,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                     @Override
                     public void run() {
                         db.audioRecordDao().insert(record);
+                        AudioRecord temp = db.audioRecordDao().searchDatabase(record.getFilename()).get(0);
+                        Album alb = new Album("All Records");
+                        alb.setRecordID(temp.getId());
+                        db.albumDao().insert(alb);
                     }
                 }).start();
                 Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
@@ -243,6 +258,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             public void run() {
                 List<AudioRecord> queryResult = db.audioRecordDao().getAll();
                 records.addAll(queryResult);
+//                db.albumDao().insert(new Album("All record",1));
+//                db.albumDao().insert(new Album("All record",2));
+//                db.albumDao().insert(new Album("All record",3));
+//                db.albumDao().insert(new Album("Album 1",2));
             }
         }).start();
     }
@@ -329,7 +348,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
     public void stopRec() {
         timer.stop();
 
-        recordService.stop();
+        recordService.stop(false);
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -354,6 +373,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             tvTimer.setText(recordService.currentTime);
             this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
             waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        }else{
+            tvTimer.setText("00:00.00");
         }
     }
 

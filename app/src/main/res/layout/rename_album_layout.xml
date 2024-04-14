@@ -1,25 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/background_round"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:layout_behavior="@string/bottom_sheet_behavior"
-    android:id="@+id/popup_insert_note">
-    <LinearLayout
+    android:orientation="vertical"
+    android:background="@drawable/background_round"
+    android:layout_marginTop="20dp"
+    android:id="@+id/renameAlbumSheet">
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Your note"
-            android:textSize="24sp"
-            android:textAlignment="center" />
-    </LinearLayout>
+        android:layout_marginTop="10dp"
+        android:text="Rename Album"
+        android:textSize="24sp"
+        android:textAlignment="center" />
+
     <com.google.android.material.textfield.TextInputLayout
         style="@style/TextLayoutStyle"
         android:layout_width="match_parent"
@@ -27,7 +23,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/addTextNote"
+            android:id="@+id/renameAlbInput"
             android:layout_margin="16dp"
             android:padding="16dp"
             />
@@ -38,7 +34,7 @@
         android:gravity="center"
         android:layout_marginBottom="20dp">
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancelAddNote"
+            android:id="@+id/btnCancelRename"
             android:layout_width="140dp"
             android:layout_height="60dp"
             android:text="Cancel"
@@ -48,7 +44,7 @@
             app:rippleColor="@color/darkGray"/>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnSaveNote"
+            android:id="@+id/btnRenameAlb"
             android:layout_width="140dp"
             android:layout_height="60dp"
             android:text="Save"

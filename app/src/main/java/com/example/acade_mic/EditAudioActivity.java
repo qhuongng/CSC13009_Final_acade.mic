@@ -36,6 +36,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
@@ -347,8 +348,9 @@ public class EditAudioActivity extends AppCompatActivity {
     private void playAudio(String filePath, float startSeconds, float endSeconds) {
         try {
             // Reset the MediaPlayer before initializing it
-            mediaPlayer.reset();
-
+            if (mediaPlayer != null && (mediaPlayer.isPlaying() || mediaPlayer.isLooping())) {
+                mediaPlayer.reset();
+            }
             // Set the data source and prepare the MediaPlayer
             mediaPlayer.setDataSource(filePath);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {

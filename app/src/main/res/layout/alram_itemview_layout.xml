@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:clickable="true"
+    android:background="?selectableItemBackground"
+    android:paddingStart="13dp"
+    android:paddingEnd="13dp"
+    android:paddingTop="18dp"
+    android:paddingBottom="18dp"
+    android:gravity="center_vertical">
+
+    <ImageButton
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:clickable="false"
+        android:background="@drawable/ic_circle"
+        android:src="@drawable/ic_play"
+        android:layout_marginEnd="10dp"
+        android:contentDescription="Play button"/>
+
+    <LinearLayout
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvStartDateTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Started on 01/01/2024 23:01:30"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvDuration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="100 seconds"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:visibility="gone"
+        android:clickable="false"
+        />
+</LinearLayout>

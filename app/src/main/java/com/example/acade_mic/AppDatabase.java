@@ -1,16 +1,36 @@
 package com.example.acade_mic;
 import android.content.Context;
 
-import androidx.room.Dao;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-@Database(entities = {AudioRecord.class, Bookmark.class, TranscriptionFile.class}, version = 3,exportSchema = false)
+import com.example.acade_mic.dao.AlarmDao;
+import com.example.acade_mic.dao.AlbumDao;
+import com.example.acade_mic.dao.AudioRecordDao;
+import com.example.acade_mic.dao.BookmarkDao;
+import com.example.acade_mic.dao.ReviewAlarmDao;
+import com.example.acade_mic.dao.TimeToDeleteDao;
+import com.example.acade_mic.dao.TranscriptionFileDao;
+import com.example.acade_mic.model.Alarm;
+import com.example.acade_mic.model.Album;
+import com.example.acade_mic.model.AudioRecord;
+import com.example.acade_mic.model.Bookmark;
+import com.example.acade_mic.model.ReviewAlarm;
+import com.example.acade_mic.model.TimeToDelete;
+import com.example.acade_mic.model.TranscriptionFile;
+
+
+@Database(entities = {Album.class, AudioRecord.class, Bookmark.class, TranscriptionFile.class, Alarm.class, ReviewAlarm.class, TimeToDelete.class}, version = 9,exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract AudioRecordDao audioRecordDao();
     public abstract BookmarkDao bookmarkDao();
+    public abstract AlarmDao alarmDao();
     public  abstract TranscriptionFileDao transcriptionFileDao();
+    public abstract ReviewAlarmDao reviewAlarmDao();
+    public  abstract AlbumDao albumDao();
+    public abstract TimeToDeleteDao timeToDeleteDao();
+
 
     private static volatile AppDatabase INSTANCE;
 

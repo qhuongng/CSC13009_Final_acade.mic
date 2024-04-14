@@ -89,21 +89,22 @@ public class RecorderWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        RemoteViews remoteViews;
-        ComponentName watchWidget;
-        remoteViews = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
-        watchWidget = new ComponentName(context, RecorderWidget.class);
+        for (int i=0; i < appWidgetIds.length; i++) {
+            int appWidgetId = appWidgetIds[i];
+            RemoteViews views;
+            views = new RemoteViews(context.getPackageName(), R.layout.recorder_widget);
 
-        Intent intent = new Intent(context, getClass());
-        intent.setAction("PLAY_BUTTON");
-        PendingIntent pi = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        remoteViews.setOnClickPendingIntent(R.id.widget_play_btn, pi);
+            Intent intent = new Intent(context, getClass());
+            intent.setAction("PLAY_BUTTON");
+            PendingIntent pi = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            views.setOnClickPendingIntent(R.id.widget_play_btn, pi);
 
-        Intent intent2 = new Intent(context, getClass());
-        intent2.setAction("PAUSE_BUTTON");
-        PendingIntent pi2 = PendingIntent.getBroadcast(context, 100, intent2, PendingIntent.FLAG_IMMUTABLE);
-        remoteViews.setOnClickPendingIntent(R.id.widget_pause_btn, pi2);
+            Intent intent2 = new Intent(context, getClass());
+            intent2.setAction("PAUSE_BUTTON");
+            PendingIntent pi2 = PendingIntent.getBroadcast(context, 0, intent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            views.setOnClickPendingIntent(R.id.widget_pause_btn, pi2);
 
-        appWidgetManager.updateAppWidget(watchWidget, remoteViews);
+            appWidgetManager.updateAppWidget(appWidgetId, views);
+        }
     }
 }

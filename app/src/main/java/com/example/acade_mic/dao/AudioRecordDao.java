@@ -1,4 +1,4 @@
-package com.example.acade_mic;
+package com.example.acade_mic.dao;
 
 import androidx.room.Dao;
 import androidx.room.Delete;
@@ -6,14 +6,16 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
 
-import java.util.Arrays;
+import com.example.acade_mic.model.AudioRecord;
+
 import java.util.List;
 
 @Dao
 public interface AudioRecordDao {
     @Query("SELECT * FROM audioRecords")
     List<AudioRecord> getAll();
-
+    @Query("SELECT * FROM audioRecords where id = :id")
+    AudioRecord getRecbyID(int id);
     @Query("SELECT * FROM audioRecords where filename like :query")
     List<AudioRecord> searchDatabase(String query);
     // "..."  indicates that the method can accept zero or more AudioRecord objects as arguments.
