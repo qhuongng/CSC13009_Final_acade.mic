@@ -42,11 +42,15 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.SequenceInputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
@@ -114,8 +118,7 @@ public class EditAudioActivity extends AppCompatActivity {
         ArrayList<String> filenames = getIntent().getStringArrayListExtra("filenames");
 
         HashMap<String, String> filenamePathMap = new HashMap<>();
-        int size = filePaths.size();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < filePaths.size(); i++) {
             String filename = filenames.get(i);
             String filepath = filePaths.get(i);
             filenamePathMap.put(filename, filepath);
@@ -240,7 +243,10 @@ public class EditAudioActivity extends AppCompatActivity {
             else
             {
                 String newFileName = fileNameInput.getText().toString();
-                mergeAudioFiles(selectedItems, newFileName, filenamePathMap);
+                //mergeAudioFiles(selectedItems, newFileName, filenamePathMap);
+
+                appendToExistingFile(selectedItems, newFileName, filenamePathMap);
+
             }
         });
 
@@ -482,23 +488,27 @@ public class EditAudioActivity extends AppCompatActivity {
         String newFilePath = path[0] + newFileName;
         MediaMuxer muxer = null;
 
+        Log.d("MERGE", "file1: " + filenames.get(0) + " " + "file2: " + filenames.get(1));
         try {
             muxer = new MediaMuxer(newFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
             int numTracks = filenames.size();
+            Log.d("MERGE", "numTracks: " + numTracks);
             ArrayList<MediaExtractor> extractors = new ArrayList<>(numTracks);
-
             // Initialize extractors and add tracks
             for (String inputFile : filenames) {
                 String filePath = filenamePathMap.get(inputFile);
                 MediaExtractor extractor = new MediaExtractor();
                 extractor.setDataSource(filePath);
 
+                Log.d(inputFile, "extractor: " + extractor);
                 int trackIndex = selectTrack(extractor);
+                Log.d(inputFile, "trackIndex: " + trackIndex);
                 if (trackIndex >= 0) {
                     extractor.selectTrack(trackIndex);
                     MediaFormat format = extractor.getTrackFormat(trackIndex);
                     int muxerTrackIndex = muxer.addTrack(format);
+                    Log.d(String.valueOf(trackIndex), "muxerTrackIndex: " + muxerTrackIndex);
                     if (muxerTrackIndex >= 0) {
                         extractors.add(extractor);
                     }
@@ -509,10 +519,11 @@ public class EditAudioActivity extends AppCompatActivity {
             muxer.start();
 
             // Write sample data
-            ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
-            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
 
-            for (MediaExtractor extractor : extractors) {
+            for (int i = 0; i < extractors.size(); i++) {
+                MediaExtractor extractor = extractors.get(i);
+                ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
+
                 long presentationTimeUs = 0;
                 while (true) {
                     int sampleSize = extractor.readSampleData(buffer, 0);
@@ -520,16 +531,20 @@ public class EditAudioActivity extends AppCompatActivity {
                         break;
                     }
 
+                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
                     info.offset = 0;
                     info.size = sampleSize;
                     info.presentationTimeUs = presentationTimeUs;
                     info.flags = extractor.getSampleFlags();
 
                     muxer.writeSampleData(extractors.indexOf(extractor), buffer, info);
+                    Log.d(String.valueOf(extractor), String.valueOf(extractors.indexOf(extractor)));
                     extractor.advance();
                     presentationTimeUs = extractor.getSampleTime();
+                    Log.d(String.valueOf(extractor), String.valueOf(presentationTimeUs));
                 }
                 extractor.release();
+                buffer.clear();
             }
 
             // Stop and release muxer
@@ -540,6 +555,34 @@ public class EditAudioActivity extends AppCompatActivity {
             Log.e(TAG, "Error merging audio files", e);
         }
     }
+
+    private void appendToExistingFile(ArrayList<String> filenames, String newFileName, HashMap<String, String> filenamePathMap) {
+        try {
+            String oldFileName = filenames.get(0);
+            String oldFilePath = filenamePathMap.get(oldFileName);
+            String[] path = oldFilePath.split(oldFileName);
+            String newFilePath = path[0] + newFileName;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            for (int i = 0; i < filenames.size(); i++) {
+                File file = new File(filenamePathMap.get(filenames.get(i)));
+                FileInputStream fis = new FileInputStream(file);
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+                fis.close();
+            }
+            baos.close();
+            byte[] outputFileBytes = baos.toByteArray();
+            FileOutputStream fos = new FileOutputStream(newFilePath);
+            fos.write(outputFileBytes);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private static int selectTrack(MediaExtractor extractor) {
         int numTracks = extractor.getTrackCount();

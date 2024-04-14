@@ -54,7 +54,6 @@ dependencies {
     implementation("androidx.room:room-runtime:2.6.1");
     annotationProcessor("androidx.room:room-compiler:2.6.1");
     implementation("androidx.room:room-ktx:2.6.1");
-
     implementation("com.google.cloud:google-cloud-speech:1.29.1")
     implementation("io.grpc:grpc-okhttp:1.38.1")
     implementation("io.grpc:grpc-stub:1.38.1")
