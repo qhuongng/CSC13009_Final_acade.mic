@@ -18,6 +18,11 @@ public class Album {
         this.albumName=albumName;
     }
 
+    public Album(String albumName, int recordID){
+        this.albumName = albumName;
+        this.recordID = recordID;
+    }
+
     public String getAlbumName() {
         return albumName;
     }

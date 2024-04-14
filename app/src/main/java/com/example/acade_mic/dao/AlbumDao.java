@@ -35,5 +35,7 @@ public interface AlbumDao {
 
     @Query("SELECT distinct albumName FROM albums where albumName like :query")
     List<String> searchDatabase(String query);
+    @Query("delete from albums where recordID = :id")
+    void deleteByIdRecord(int id);
 
 }

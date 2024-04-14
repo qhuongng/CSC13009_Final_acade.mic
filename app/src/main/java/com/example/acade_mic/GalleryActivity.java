@@ -24,7 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.acade_mic.adapter.Adapter;
+import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
+import com.example.acade_mic.model.TimeToDelete;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
@@ -176,52 +178,100 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
-                builder.setTitle("Delete record?");
-                final int nbRecords = countSelectedRecords(records);
-                builder.setMessage("Are you sure you want to delete " + nbRecords + " record(s)?");
+                if(!albName.equals("Delete")){
+                    AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
+                    builder.setTitle("Delete record?");
+                    final int nbRecords = countSelectedRecords(records);
+                    builder.setMessage("Are you sure you want to delete " + nbRecords + " record(s)?");
 
-                builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        ArrayList<AudioRecord> toDelete = new ArrayList<>();
-                        for (AudioRecord record : records) {
-                            if (record.isChecked()) {
-                                toDelete.add(record);
-                                File delFile = new File(record.getFilePath());
-                                if(delFile != null)  delFile.delete();
-                            }
-                        }
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                db.audioRecordDao().delete(toDelete);
-                                for(AudioRecord ar : toDelete){
-                                    db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
+                    builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ArrayList<AudioRecord> toDelete = new ArrayList<>();
+                            for (AudioRecord record : records) {
+                                if (record.isChecked()) {
+                                    toDelete.add(record);
+
+//                                    File delFile = new File(record.getFilePath());
+//                                    if(delFile != null)  delFile.delete();
                                 }
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        records.removeAll(toDelete);
-                                        mAdapter.notifyDataSetChanged();
-                                        leaveEditMode();
-                                    }
-                                });
                             }
-                        }).start();
-                        Toast.makeText(GalleryActivity.this, "Delete File successfully", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    db.audioRecordDao().delete(toDelete);
 
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        // it does nothing
-                    }
-                });
+                                    for(AudioRecord ar : toDelete){
+                                        db.albumDao().deleteByIdRecord(ar.getId());
+                                        db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
+                                        db.albumDao().insert(new Album("Delete",ar.getId()));
+                                        db.timeToDeleteDao().insert(new TimeToDelete(ar.getId(),System.currentTimeMillis()));
+                                    }
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            records.removeAll(toDelete);
+                                            mAdapter.notifyDataSetChanged();
+                                            leaveEditMode();
+                                        }
+                                    });
+                                }
+                            }).start();
+                            Toast.makeText(GalleryActivity.this, "Delete Records successfully", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
-                AlertDialog dialog = builder.create();
-                dialog.show();
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // it does nothing
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
+                }
+                else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
+                    builder.setTitle("Delete record permanently?");
+                    final int nbRecords = countSelectedRecords(records);
+                    builder.setMessage("Are you sure you want to permanently delete " + nbRecords + " record(s)? They cannot be recovered later!");
+
+                    builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ArrayList<AudioRecord> toDelete = new ArrayList<>();
+                            for (AudioRecord record : records) {
+                                if (record.isChecked()) {
+                                    toDelete.add(record);
+                                    File delFile = new File(record.getFilePath());
+                                    if(delFile != null)  delFile.delete();
+                                }
+                            }
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    db.audioRecordDao().delete(toDelete);
+                                    for(AudioRecord ar : toDelete){
+                                        db.albumDao().deleteByIdRecord(ar.getId());
+                                        db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
+                                        db.transcriptionFileDao().delete(ar.getId());
+                                        db.timeToDeleteDao().deleteByIdRecord(ar.getId());
+                                    }
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            records.removeAll(toDelete);
+                                            mAdapter.notifyDataSetChanged();
+                                            leaveEditMode();
+                                        }
+                                    });
+                                }
+                            }).start();
+                            Toast.makeText(GalleryActivity.this, "Delete Records successfully", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
             }
             private int countSelectedRecords(ArrayList<AudioRecord> records) {
                 int count = 0;
@@ -416,6 +466,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 List<AudioRecord> queryResult = db.audioRecordDao().searchDatabase(String.format("%%%s%%",query));
                 records.addAll(queryResult);
 
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -423,6 +474,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     }
                 });
             }
+
         }).start();
     }
 
