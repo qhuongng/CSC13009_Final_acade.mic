@@ -2,25 +2,13 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    app:layout_behavior="@string/bottom_sheet_behavior"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/background_round"
+    android:id="@+id/add_review_audio"
     >
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Review Alarm"
-        android:textSize="18dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_marginStart="20dp"
-        />
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:background="@color/black" android:layout_marginStart="20dp" android:layout_marginEnd="50dp" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
@@ -46,6 +34,7 @@
             android:focusableInTouchMode="false"
             android:textAlignment="center"
             android:hint="Start date"
+            android:layout_marginStart="15dp"
             />
     </LinearLayout>
     <LinearLayout
@@ -61,7 +50,7 @@
             android:layout_height="wrap_content"
             android:text="Time: "
             android:textSize="18dp"
-            android:layout_marginEnd="10dp"
+            android:layout_marginEnd="25dp"
             />
 
         <LinearLayout
@@ -84,29 +73,20 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_gravity="center"
         >
-        <ImageButton
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCreate"
-            android:clickable="false"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_check"
-            app:tint="@color/playerColor"
-            android:layout_gravity="center"/>
-
-        <TextView
-            android:id="@+id/tvAccept"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
             android:text="Create"
-            android:textColor="@color/playerColor"
-            android:textSize="18dp"/>
+            android:backgroundTint="@color/strokeColor"
+            android:textColor="@color/white"
+            app:cornerRadius="26dp"
+            app:rippleColor="@color/darkGray"/>
     </LinearLayout>
 </LinearLayout>

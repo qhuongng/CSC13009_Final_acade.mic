@@ -16,6 +16,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
     <application
         android:allowBackup="true"
@@ -86,7 +87,9 @@
             android:name=".EditAudioActivity">
         </activity>
         <service android:name=".ReviewAlarmService"
-            android:enabled="true"/>
+            android:enabled="true"
+            android:foregroundServiceType="remoteMessaging  "
+            tools:ignore="ForegroundServicePermission" />
     </application>
 
 </manifest>
