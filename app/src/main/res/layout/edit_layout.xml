@@ -107,6 +107,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
                 android:layout_marginEnd="30dp"
                 android:id="@+id/cutAudio"
                 android:text="Cut"/>
@@ -114,8 +115,8 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/mergeAudio"
-                android:text="Merge"/>
+                android:id="@+id/cloneAudio"
+                android:text="Clone"/>
         </LinearLayout>
 
         <com.google.android.material.slider.RangeSlider
