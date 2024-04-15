@@ -327,15 +327,18 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             @Override
             public void run() {
                 List<String> name = db.albumDao().getAllAlbumName();
-                if(name.isEmpty()){
-                    Album allRec = new Album("All Records");
-                    Album delRec = new Album("Delete");
-                    albumNames.add(allRec.getAlbumName());
-                    albumNames.add(delRec.getAlbumName());
-                    db.albumDao().insert(allRec);
-                    db.albumDao().insert(delRec);
+                if(!name.contains("All Records")){
+                        Album allRec = new Album("All Records");
+                        albumNames.add(allRec.getAlbumName());
+                        db.albumDao().insert(allRec);
                 }
-                else albumNames.addAll(name);
+                albumNames.addAll(name);
+                if(!name.contains("Delete")){
+                        Album delRec = new Album("Delete");
+                        albumNames.add(delRec.getAlbumName());
+                        db.albumDao().insert(delRec);
+                }
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

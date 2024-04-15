@@ -9,11 +9,15 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -26,7 +30,6 @@ import android.widget.Toast;
 import com.example.acade_mic.adapter.Adapter;
 import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
-import com.example.acade_mic.model.TimeToDelete;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
@@ -191,21 +194,24 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                             for (AudioRecord record : records) {
                                 if (record.isChecked()) {
                                     toDelete.add(record);
-
-//                                    File delFile = new File(record.getFilePath());
-//                                    if(delFile != null)  delFile.delete();
+                                    PersistableBundle extras = new PersistableBundle();
+                                    extras.putString("filePath",record.getFilePath());
+                                    extras.putInt("id", record.getId());
+                                    JobInfo.Builder builder = new JobInfo.Builder(record.getId(),new ComponentName(getBaseContext(), FileDeleteJobService.class));
+                                    //builder.setMinimumLatency(60 * 1000);
+                                    builder.setExtras(extras);
+                                    builder.setMinimumLatency(30 * 24 * 60 * 60 * 1000);
+                                    JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+                                    jobScheduler.schedule(builder.build());
                                 }
                             }
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    db.audioRecordDao().delete(toDelete);
-
                                     for(AudioRecord ar : toDelete){
                                         db.albumDao().deleteByIdRecord(ar.getId());
                                         db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
                                         db.albumDao().insert(new Album("Delete",ar.getId()));
-                                        db.timeToDeleteDao().insert(new TimeToDelete(ar.getId(),System.currentTimeMillis()));
                                     }
                                     runOnUiThread(new Runnable() {
                                         @Override
@@ -256,7 +262,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                         db.albumDao().deleteByIdRecord(ar.getId());
                                         db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
                                         db.transcriptionFileDao().delete(ar.getId());
-                                        db.timeToDeleteDao().deleteByIdRecord(ar.getId());
+
                                     }
                                     runOnUiThread(new Runnable() {
                                         @Override
@@ -271,6 +277,15 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                             Toast.makeText(GalleryActivity.this, "Delete Records successfully", Toast.LENGTH_SHORT).show();
                         }
                     });
+                    builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // it does nothing
+                        }
+                    });
+
+                    AlertDialog dialog = builder.create();
+                    dialog.show();
                 }
             }
             private int countSelectedRecords(ArrayList<AudioRecord> records) {

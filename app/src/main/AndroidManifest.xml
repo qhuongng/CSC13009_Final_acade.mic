@@ -60,7 +60,9 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/recorder_widget_info" />
         </receiver>
-
+        <service android:name=".FileDeleteJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
         <activity
             android:name=".AudioPlayerActivity"
             android:exported="false" />
@@ -93,7 +95,7 @@
         </activity>
         <service android:name=".ReviewAlarmService"
             android:enabled="true"
-            android:foregroundServiceType="remoteMessaging  "
+            android:foregroundServiceType="remoteMessaging"
             tools:ignore="ForegroundServicePermission" />
     </application>
 

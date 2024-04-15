@@ -276,6 +276,7 @@ public class EditAudioActivity extends AppCompatActivity {
                 isCuttingAudio = true;
                 filePath = filePaths.get(0);
                 fileName = filenames.get(0);
+
                 tvFilename.setText(fileName);
                 enableCut();
                 enablePlay();

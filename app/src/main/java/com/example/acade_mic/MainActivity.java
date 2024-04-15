@@ -121,14 +121,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if (!permissionGranted3) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE_MICROPHONE}, REQUEST_CODE3);
         }
-
-        db = Room.databaseBuilder(
-                getApplicationContext(),
-                AppDatabase.class,
-                "audioRecords"
-        ).build();
         db = AppDatabase.getInstance(this);
-
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
