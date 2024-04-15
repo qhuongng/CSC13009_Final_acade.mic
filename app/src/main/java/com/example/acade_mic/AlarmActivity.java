@@ -206,6 +206,11 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
     }
 
     @Override
+    public void onResume(Bundle savedInstanceState) {
+
+    }
+
+    @Override
     public void onItemClickListener(int position) {
 
     }

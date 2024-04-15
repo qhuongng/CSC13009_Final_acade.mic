@@ -629,6 +629,11 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     };
 
     @Override
+    public void onResume(Bundle savedInstanceState) {
+
+    }
+
+    @Override
     public void onItemClickListener(int position) {
         try {
             Bookmark bookmark = bookmarks.get(position);

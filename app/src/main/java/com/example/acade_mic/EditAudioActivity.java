@@ -33,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -57,12 +58,13 @@ import java.util.List;
 public class EditAudioActivity extends AppCompatActivity {
     private ArrayList<AudioRecord> records;
     private AppDatabase db = null;
+    private String albName;
     private ImageButton btnPlay;
     private SeekBar seekBar;
     private MediaPlayer mediaPlayer;
     private TextView tvFilename;
     private Button cutAudio;
-    private Button mergeAudio;
+    private Button cloneAudio;
     private String filePath = null;
     private String fileName = null;
     private TextView tvTrackProgress;
@@ -85,8 +87,7 @@ public class EditAudioActivity extends AppCompatActivity {
     private float end;
     private MaterialToolbar toolbar;
 
-
-
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -103,6 +104,7 @@ public class EditAudioActivity extends AppCompatActivity {
 
         ArrayList<String> filePaths = getIntent().getStringArrayListExtra("filepaths");
         ArrayList<String> fileNames = getIntent().getStringArrayListExtra("filenames");
+        albName = getIntent().getStringExtra("albName");
 
         HashMap<String, String> filenamePathMap = new HashMap<>();
         for (int i = 0; i < filePaths.size(); i++) {
@@ -116,7 +118,7 @@ public class EditAudioActivity extends AppCompatActivity {
         seekBar = findViewById(R.id.seekBar);
         tvFilename = findViewById(R.id.tvFilename);
         cutAudio = findViewById(R.id.cutAudio);
-        mergeAudio = findViewById(R.id.mergeAudio);
+        cloneAudio = findViewById(R.id.cloneAudio);
         tvTrackProgress = findViewById(R.id.tvTrackProgress);
         tvTrackDuration = findViewById(R.id.tvTrackDuration);
         RangeSlider rangeSlider = findViewById(R.id.rangeSlider);
@@ -125,6 +127,7 @@ public class EditAudioActivity extends AppCompatActivity {
         selectedItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         selectedItemsRecyclerView.setAdapter(selectedItemsAdapter);
 
+        tvFilename.setText("EDIT AUDIO");
 
         spinner = findViewById(R.id.fileSpinner);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, fileNames);
@@ -136,6 +139,40 @@ public class EditAudioActivity extends AppCompatActivity {
                 String selectedItem = (String) parent.getItemAtPosition(position);
                 if (!selectedItems.contains(selectedItem)) {
                     selectedItems.add(selectedItem);
+                    if(selectedItems.size() > 1)
+                    {
+                        isCuttingAudio = false;
+                        cutAudio.setEnabled(false);
+                        disableCut();
+                        disablePlay();
+                        rangeSlider.setEnabled(false);
+                        enableClone();
+                    }
+                    else {
+                        isCuttingAudio = true;
+                        filePath = filePaths.get(0);
+                        fileName = fileNames.get(0);
+                        enableCut();
+                        enablePlay();
+                        rangeSlider.setEnabled(true);
+                        FileInputStream fis;
+                        try {
+                            fis = new FileInputStream(filePath);
+                            mediaPlayer.setDataSource(fis.getFD());
+                            mediaPlayer.prepare();
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        tvTrackProgress.setText("00:00");
+                        tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
+                        seekBar.setProgress(0);
+
+                        float duration = calculateAudioDuration(filePath);
+                        rangeSlider.setValueFrom(0);
+                        rangeSlider.setValueTo(duration);
+                        rangeSlider.setValues((float) 0, duration);
+                    }
                     selectedItemsAdapter.notifyDataSetChanged();
                 }
             }
@@ -192,17 +229,18 @@ public class EditAudioActivity extends AppCompatActivity {
             }
         });
 
-        mergeAudio.setOnClickListener(new View.OnClickListener() {
+        cloneAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (selectedItems.size() < 2) {
-                    Toast.makeText(EditAudioActivity.this, "Select at least two audio files for merging", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
-                bottomSheetBG.setVisibility(View.VISIBLE);
-                fileNameInput.setText("MergedAudio.mp3");
-                textViewTitle.setText("Enter your filename for merged audio");
+//                if (selectedItems.size() < 2) {
+//                    Toast.makeText(EditAudioActivity.this, "Select at least two audio files for merging", Toast.LENGTH_SHORT).show();
+//                    return;
+//                }
+//                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+//                bottomSheetBG.setVisibility(View.VISIBLE);
+//                fileNameInput.setText("MergedAudio.mp3");
+//                textViewTitle.setText("Enter your filename for merged audio");
+                CloneFiles(selectedItems, filenamePathMap);
             }
         });
 
@@ -227,55 +265,7 @@ public class EditAudioActivity extends AppCompatActivity {
                 String newFileName = fileNameInput.getText().toString();
                 cutAudioFile(newFileName, fileName, filePath, start, end);
             }
-            else
-            {
-                String newFileName = fileNameInput.getText().toString();
-                //mergeAudioFiles(selectedItems, newFileName, filenamePathMap);
-
-                appendToExistingFile(selectedItems, newFileName, filenamePathMap);
-
-            }
         });
-
-        if (filePaths != null && !filePaths.isEmpty() && fileNames != null && !fileNames.isEmpty()) {
-            if (filePaths.size() > 1) {
-                isCuttingAudio = false;
-                cutAudio.setEnabled(false);
-                tvFilename.setText("AUDIO MERGING");
-                disableCut();
-                disablePlay();
-                rangeSlider.setEnabled(false);
-                enableMerge();
-            } else {
-                isCuttingAudio = true;
-                filePath = filePaths.get(0);
-                fileName = fileNames.get(0);
-                tvFilename.setText(fileName);
-                enableCut();
-                enablePlay();
-                rangeSlider.setEnabled(true);
-                disableMerge();
-                FileInputStream fis;
-                try {
-                    fis = new FileInputStream(filePath);
-                    mediaPlayer.setDataSource(fis.getFD());
-                    mediaPlayer.prepare();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-
-
-                tvTrackProgress.setText("00:00");
-                tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
-                seekBar.setProgress(0);
-
-                //float duration = calculateAudioDuration(filePath);
-                rangeSlider.setValueFrom(0);
-                rangeSlider.setValueTo(mediaPlayer.getDuration()/1000);
-                rangeSlider.setValues((float) 0, (float) (mediaPlayer.getDuration()/1000));
-            }
-        }
 
         btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -465,94 +455,18 @@ public class EditAudioActivity extends AppCompatActivity {
         int durationInSeconds = (int)(endSeconds - startSeconds);
 
         String duration = String.format("%02d:%02d", (durationInSeconds % 3600) / 60, durationInSeconds % 60);
-        saveCutAudio(newFilePath, newFileName, timestamp, duration);
+        saveOutputToDb(newFilePath, newFileName, timestamp, duration);
     }
 
-    private static final String TAG = "AudioMerger";
-    @SuppressLint("WrongConstant")
-    private void mergeAudioFiles(ArrayList<String> filenames, String newFileName, HashMap<String, String> filenamePathMap) {
-        String oldFileName = filenames.get(0);
-        String oldFilePath = filenamePathMap.get(oldFileName);
-        String[] path = oldFilePath.split(oldFileName);
-        String newFilePath = path[0] + newFileName;
-        MediaMuxer muxer = null;
-
-        Log.d("MERGE", "file1: " + filenames.get(0) + " " + "file2: " + filenames.get(1));
+    private void CloneFiles(ArrayList<String> filenames, HashMap<String, String> filenamePathMap) {
         try {
-            muxer = new MediaMuxer(newFilePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-
-            int numTracks = filenames.size();
-            Log.d("MERGE", "numTracks: " + numTracks);
-            ArrayList<MediaExtractor> extractors = new ArrayList<>(numTracks);
-            // Initialize extractors and add tracks
-            for (String inputFile : filenames) {
-                String filePath = filenamePathMap.get(inputFile);
-                MediaExtractor extractor = new MediaExtractor();
-                extractor.setDataSource(filePath);
-
-                Log.d(inputFile, "extractor: " + extractor);
-                int trackIndex = selectTrack(extractor);
-                Log.d(inputFile, "trackIndex: " + trackIndex);
-                if (trackIndex >= 0) {
-                    extractor.selectTrack(trackIndex);
-                    MediaFormat format = extractor.getTrackFormat(trackIndex);
-                    int muxerTrackIndex = muxer.addTrack(format);
-                    Log.d(String.valueOf(trackIndex), "muxerTrackIndex: " + muxerTrackIndex);
-                    if (muxerTrackIndex >= 0) {
-                        extractors.add(extractor);
-                    }
-                }
-            }
-
-            // Start muxer after adding all tracks
-            muxer.start();
-
-            // Write sample data
-
-            for (int i = 0; i < extractors.size(); i++) {
-                MediaExtractor extractor = extractors.get(i);
-                ByteBuffer buffer = ByteBuffer.allocate(1024 * 1024);
-
-                long presentationTimeUs = 0;
-                while (true) {
-                    int sampleSize = extractor.readSampleData(buffer, 0);
-                    if (sampleSize < 0) {
-                        break;
-                    }
-
-                    MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-                    info.offset = 0;
-                    info.size = sampleSize;
-                    info.presentationTimeUs = presentationTimeUs;
-                    info.flags = extractor.getSampleFlags();
-
-                    muxer.writeSampleData(extractors.indexOf(extractor), buffer, info);
-                    Log.d(String.valueOf(extractor), String.valueOf(extractors.indexOf(extractor)));
-                    extractor.advance();
-                    presentationTimeUs = extractor.getSampleTime();
-                    Log.d(String.valueOf(extractor), String.valueOf(presentationTimeUs));
-                }
-                extractor.release();
-                buffer.clear();
-            }
-
-            // Stop and release muxer
-            muxer.stop();
-            muxer.release();
-
-        } catch (IOException e) {
-            Log.e(TAG, "Error merging audio files", e);
-        }
-    }
-
-    private void appendToExistingFile(ArrayList<String> filenames, String newFileName, HashMap<String, String> filenamePathMap) {
-        try {
-            String oldFileName = filenames.get(0);
-            String oldFilePath = filenamePathMap.get(oldFileName);
-            String[] path = oldFilePath.split(oldFileName);
-            String newFilePath = path[0] + newFileName;
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             for (int i = 0; i < filenames.size(); i++) {
+                String oldFileName = filenames.get(i);
+                String oldFilePath = filenamePathMap.get(oldFileName);
+                String[] path = oldFilePath.split(oldFileName);
+                String newFileName = "copy_" + oldFileName;
+                String newFilePath = path[0] + "copy_" + oldFileName;
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 File file = new File(filenamePathMap.get(filenames.get(i)));
                 FileInputStream fis = new FileInputStream(file);
                 byte[] buffer = new byte[1024];
@@ -561,29 +475,24 @@ public class EditAudioActivity extends AppCompatActivity {
                     baos.write(buffer, 0, bytesRead);
                 }
                 fis.close();
+                baos.close();
+                byte[] outputFileBytes = baos.toByteArray();
+                FileOutputStream fos = new FileOutputStream(newFilePath);
+                fos.write(outputFileBytes);
+                fos.close();
+
+                long timestamp = new Date().getTime();
+                int durationInSeconds = (int)calculateAudioDuration(newFilePath);
+                Log.d("DURATION", String.valueOf(durationInSeconds));
+                String duration = String.format("%02d:%02d", (durationInSeconds % 3600) / 60, durationInSeconds % 60);
+                saveOutputToDb(newFilePath, newFileName, timestamp, duration);
             }
-            baos.close();
-            byte[] outputFileBytes = baos.toByteArray();
-            FileOutputStream fos = new FileOutputStream(newFilePath);
-            fos.write(outputFileBytes);
-            fos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private static int selectTrack(MediaExtractor extractor) {
-        int numTracks = extractor.getTrackCount();
-        for (int i = 0; i < numTracks; i++) {
-            MediaFormat format = extractor.getTrackFormat(i);
-            String mime = format.getString(MediaFormat.KEY_MIME);
-            if (mime.startsWith("audio/")) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
-    private void saveCutAudio(String filePath, String newFileName, long timestamp, String duration) {
+    private void saveOutputToDb(String filePath, String newFileName, long timestamp, String duration) {
         File cutAudioFile = new File(filePath);
 
         if (cutAudioFile.exists()) {
@@ -598,16 +507,23 @@ public class EditAudioActivity extends AppCompatActivity {
             } else {
 
                 AudioRecord record = new AudioRecord(newFileName, filePath, timestamp, duration, filePath);
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
+
                         db.audioRecordDao().insert(record);
+                        List<AudioRecord> listFromDb = db.audioRecordDao().searchDatabase(newFileName);
+                        if(albName.equals("All Records")){
+                            db.albumDao().insert(new Album("All Records", listFromDb.get(0).getId()));
+                        } else {
+                            db.albumDao().insert(new Album("All Records", listFromDb.get(0).getId()));
+                            db.albumDao().insert(new Album(albName, listFromDb.get(0).getId()));
+                        }
+
                     }
                 }).start();
                 Toast.makeText(this, "Audio file saved successfully", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(this, GalleryActivity.class);
-                startActivity(intent);
             }
         } else {
             Toast.makeText(this, "Cut audio file not found", Toast.LENGTH_SHORT).show();
@@ -633,15 +549,15 @@ public class EditAudioActivity extends AppCompatActivity {
         cutAudio.setClickable(true);
         cutAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.white, getTheme()));
     }
-    private void disableMerge(){
-        mergeAudio.setEnabled(false);
-        mergeAudio.setClickable(false);
-        mergeAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
+    private void disableClone(){
+        cloneAudio.setEnabled(false);
+        cloneAudio.setClickable(false);
+        cloneAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-    private void enableMerge(){
-        mergeAudio.setEnabled(true);
-        mergeAudio.setClickable(true);
-        mergeAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.white, getTheme()));
+    private void enableClone(){
+        cloneAudio.setEnabled(true);
+        cloneAudio.setClickable(true);
+        cloneAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.white, getTheme()));
     }
     private void disablePlay(){
         btnPlay.setEnabled(false);

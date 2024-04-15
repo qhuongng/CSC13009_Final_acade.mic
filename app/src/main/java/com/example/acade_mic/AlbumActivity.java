@@ -423,6 +423,12 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
+
+    @Override
+    public void onResume(Bundle savedInstanceState) {
+
+    }
+
     @Override
     public void onItemClickListener(int position) {
         try {

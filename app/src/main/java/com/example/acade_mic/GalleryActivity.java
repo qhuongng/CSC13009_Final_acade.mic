@@ -38,6 +38,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
     private String albName;
     private ArrayList<AudioRecord> records;
@@ -404,7 +406,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     }
                     intent.putStringArrayListExtra("filepaths", filepaths);
                     intent.putStringArrayListExtra("filenames", filenames);
+                    intent.putExtra("albName", albName);
+
                     startActivity(intent);
+                    startActivityForResult(intent,1);
                 } else {
                     // If no audio record is selected, display a message
                     Toast.makeText(GalleryActivity.this, "No audio record selected", Toast.LENGTH_SHORT).show();
@@ -413,6 +418,12 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         });
 
 
+    }
+    @Override
+    public void onResume(Bundle savedInstanceState){
+        super.onResume();
+        fetchAll();
+        leaveEditMode();
     }
     private void hideKeyBoard(View v){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -503,7 +514,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void run() {
                 List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
-                System.out.println(listRecID.size());
                 records.clear();
                 if(listRecID != null){
                     for (int id: listRecID)
