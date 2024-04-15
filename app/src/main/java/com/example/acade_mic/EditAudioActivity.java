@@ -1,8 +1,5 @@
 package com.example.acade_mic;
 
-
-import static androidx.constraintlayout.helper.widget.MotionEffect.TAG;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -43,17 +40,12 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.slider.RangeSlider;
 import com.google.android.material.textfield.TextInputEditText;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.SequenceInputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -67,12 +59,12 @@ public class EditAudioActivity extends AppCompatActivity {
     private AppDatabase db = null;
     private ImageButton btnPlay;
     private SeekBar seekBar;
-    MediaPlayer mediaPlayer;
+    private MediaPlayer mediaPlayer;
     private TextView tvFilename;
     private Button cutAudio;
     private Button mergeAudio;
-    String filePath = null;
-    String fileName = null;
+    private String filePath = null;
+    private String fileName = null;
     private TextView tvTrackProgress;
     private TextView tvTrackDuration;
     private Spinner spinner;
@@ -112,15 +104,15 @@ public class EditAudioActivity extends AppCompatActivity {
                 "audioRecords"
         ).build();
 
-        records = new ArrayList<AudioRecord>();
+        records = new ArrayList<>();
         fetchAll();
 
         ArrayList<String> filePaths = getIntent().getStringArrayListExtra("filepaths");
-        ArrayList<String> filenames = getIntent().getStringArrayListExtra("filenames");
+        ArrayList<String> fileNames = getIntent().getStringArrayListExtra("filenames");
 
         HashMap<String, String> filenamePathMap = new HashMap<>();
         for (int i = 0; i < filePaths.size(); i++) {
-            String filename = filenames.get(i);
+            String filename = fileNames.get(i);
             String filepath = filePaths.get(i);
             filenamePathMap.put(filename, filepath);
         }
@@ -141,7 +133,7 @@ public class EditAudioActivity extends AppCompatActivity {
 
 
         spinner = findViewById(R.id.fileSpinner);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, filenames);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, fileNames);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -251,19 +243,7 @@ public class EditAudioActivity extends AppCompatActivity {
             }
         });
 
-        btnPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Get the start and end values from the range slider
-                float start = rangeSlider.getValues().get(0);
-                float end = rangeSlider.getValues().get(1);
-
-                // Play the audio file with the specified start and end values
-                playAudio(filePath, start, end);
-            }
-        });
-
-        if (filePaths != null && !filePaths.isEmpty() && filenames != null && !filenames.isEmpty()) {
+        if (filePaths != null && !filePaths.isEmpty() && fileNames != null && !fileNames.isEmpty()) {
             if (filePaths.size() > 1) {
                 isCuttingAudio = false;
                 cutAudio.setEnabled(false);
@@ -275,7 +255,7 @@ public class EditAudioActivity extends AppCompatActivity {
             } else {
                 isCuttingAudio = true;
                 filePath = filePaths.get(0);
-                fileName = filenames.get(0);
+                fileName = fileNames.get(0);
                 tvFilename.setText(fileName);
                 enableCut();
                 enablePlay();
@@ -286,22 +266,34 @@ public class EditAudioActivity extends AppCompatActivity {
                     fis = new FileInputStream(filePath);
                     mediaPlayer.setDataSource(fis.getFD());
                     mediaPlayer.prepare();
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+
+
 
                 tvTrackProgress.setText("00:00");
                 tvTrackDuration.setText(dateFormat(mediaPlayer.getDuration()));
                 seekBar.setProgress(0);
 
-                float duration = calculateAudioDuration(filePath);
+                //float duration = calculateAudioDuration(filePath);
                 rangeSlider.setValueFrom(0);
-                rangeSlider.setValueTo(duration);
-                rangeSlider.setValues((float) 0, duration);
+                rangeSlider.setValueTo(mediaPlayer.getDuration()/1000);
+                rangeSlider.setValues((float) 0, (float) (mediaPlayer.getDuration()/1000));
             }
         }
+
+        btnPlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Get the start and end values from the range slider
+                float start = rangeSlider.getValues().get(0);
+                float end = rangeSlider.getValues().get(1);
+
+                // Play the audio file with the specified start and end values
+                playAudio(filePath, start, end);
+            }
+        });
     }
 
     private void dismiss() {
@@ -347,8 +339,9 @@ public class EditAudioActivity extends AppCompatActivity {
 
     private void playAudio(String filePath, float startSeconds, float endSeconds) {
         try {
-            // Reset the MediaPlayer before initializing it
-            if (mediaPlayer != null && (mediaPlayer.isPlaying() || mediaPlayer.isLooping())) {
+            if (mediaPlayer == null) {
+                mediaPlayer = new MediaPlayer();
+            } else {
                 mediaPlayer.reset();
             }
             // Set the data source and prepare the MediaPlayer
