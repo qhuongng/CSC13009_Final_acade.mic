@@ -325,8 +325,12 @@ public class EditAudioActivity extends AppCompatActivity {
             if (mediaPlayer == null) {
                 mediaPlayer = new MediaPlayer();
             } else {
+                if (mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop(); // Stop the MediaPlayer if it's playing
+                }
                 mediaPlayer.reset();
             }
+
             // Set the data source and prepare the MediaPlayer
             mediaPlayer.setDataSource(filePath);
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -341,6 +345,7 @@ public class EditAudioActivity extends AppCompatActivity {
                     mp.seekTo(startTimeMs);
                     mp.start();
                     btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
+
                     // Update the seekbar progress while playing
                     final int duration = endTimeMs - startTimeMs;
                     seekBar.setMax(duration);
@@ -348,16 +353,19 @@ public class EditAudioActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             int currentPosition = startTimeMs;
-                            while (mediaPlayer != null && currentPosition <= endTimeMs) {
+                            while (mediaPlayer != null && mediaPlayer.isPlaying() && currentPosition <= endTimeMs) {
                                 try {
                                     Thread.sleep(100);
-                                    currentPosition = mediaPlayer.getCurrentPosition();
-                                    if(currentPosition >= endTimeMs){
-                                        mp.stop();
-                                        btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
-                                        mp.release();
+                                    if (mediaPlayer != null) {
+                                        if (mediaPlayer.isPlaying()) {
+                                            currentPosition = mediaPlayer.getCurrentPosition();
+                                            if (currentPosition >= endTimeMs) {
+                                                mediaPlayer.stop(); // Stop the MediaPlayer when playback finishes
+                                                btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_play_circle, getTheme()));
+                                            }
+                                            seekBar.setProgress(currentPosition - startTimeMs);
+                                        }
                                     }
-                                    seekBar.setProgress(currentPosition - startTimeMs);
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
@@ -366,11 +374,20 @@ public class EditAudioActivity extends AppCompatActivity {
                     }).start();
                 }
             });
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    // Release the MediaPlayer resources when playback completes
+                    mp.release();
+                    mediaPlayer = null;
+                }
+            });
             mediaPlayer.prepareAsync(); // Prepare asynchronously
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
 
     @SuppressLint("WrongConstant")
