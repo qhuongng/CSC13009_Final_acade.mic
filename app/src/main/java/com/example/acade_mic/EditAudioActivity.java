@@ -1,6 +1,7 @@
 package com.example.acade_mic;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaCodec;
@@ -87,11 +88,18 @@ public class EditAudioActivity extends AppCompatActivity {
     private float end;
     private MaterialToolbar toolbar;
 
+    private Intent returnIntent;
+    private boolean fileModified;
+
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_layout);
+
+        returnIntent = new Intent();
+        fileModified = false;
+
         mediaPlayer = new MediaPlayer();
         db = Room.databaseBuilder(
                 getApplicationContext(),
@@ -181,7 +189,6 @@ public class EditAudioActivity extends AppCompatActivity {
             }
         });
 
-
         // element in bottomSheet
         fileNameInput = (TextInputEditText) findViewById(R.id.filenameInput);
         btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
@@ -189,21 +196,20 @@ public class EditAudioActivity extends AppCompatActivity {
         View bottomSheet = findViewById(R.id.bottomSheet);
         TextView textViewTitle = bottomSheet.findViewById(R.id.textViewTitle);
 
-
-
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+
+        if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
         }
+
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onBackPressed();
             }
         });
-
 
         rangeSlider.addOnChangeListener(new RangeSlider.OnChangeListener() {
             @Override
@@ -218,10 +224,10 @@ public class EditAudioActivity extends AppCompatActivity {
                 }
             }
         });
+
         cutAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
                 bottomSheetBG.setVisibility(View.VISIBLE);
                 fileNameInput.setText(fileName);
@@ -273,7 +279,7 @@ public class EditAudioActivity extends AppCompatActivity {
                 }
                 if(check > 0)
                 {
-                    Toast.makeText(this, "File name already exist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "File name already exists", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     cutAudioFile(newFileName, fileName, filePath, start, end);
@@ -389,6 +395,7 @@ public class EditAudioActivity extends AppCompatActivity {
                     }).start();
                 }
             });
+
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
@@ -397,6 +404,7 @@ public class EditAudioActivity extends AppCompatActivity {
                     mediaPlayer = null;
                 }
             });
+
             mediaPlayer.prepareAsync(); // Prepare asynchronously
         } catch (IOException e) {
             e.printStackTrace();
@@ -409,7 +417,6 @@ public class EditAudioActivity extends AppCompatActivity {
     private void cutAudioFile(String newFileName, String oldFileName, String filePath, float startSeconds, float endSeconds){
         String[] path = filePath.split(oldFileName);
         String newFilePath = path[0] + newFileName;
-
 
         MediaExtractor extractor = new MediaExtractor();
         MediaMuxer muxer = null;
@@ -479,6 +486,7 @@ public class EditAudioActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+
             extractor.release();
         }
 
@@ -542,9 +550,9 @@ public class EditAudioActivity extends AppCompatActivity {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-
                         db.audioRecordDao().insert(record);
                         List<AudioRecord> listFromDb = db.audioRecordDao().searchDatabase(newFileName);
+
                         if(albName.equals("All Records")){
                             db.albumDao().insert(new Album("All Records", listFromDb.get(0).getId()));
                         } else {
@@ -554,7 +562,11 @@ public class EditAudioActivity extends AppCompatActivity {
 
                     }
                 }).start();
+
                 Toast.makeText(this, "Audio file saved successfully", Toast.LENGTH_SHORT).show();
+
+                setResult(Activity.RESULT_OK, returnIntent);
+                finish();
             }
         } else {
             Toast.makeText(this, "Cut audio file not found", Toast.LENGTH_SHORT).show();

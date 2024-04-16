@@ -9,6 +9,7 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
@@ -389,26 +390,30 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             public void onClick(View v) {
                 // Find all selected audio records
                 ArrayList<AudioRecord> selectedRecords = new ArrayList<>();
+
                 for (AudioRecord record : records) {
                     if (record.isChecked()) {
                         selectedRecords.add(record);
                     }
                 }
+
                 // Check if any audio record is selected
                 if (!selectedRecords.isEmpty()) {
                     // Start EditAudioActivity with the list of file paths and filenames as extras
                     Intent intent = new Intent(GalleryActivity.this, EditAudioActivity.class);
                     ArrayList<String> filepaths = new ArrayList<>();
                     ArrayList<String> filenames = new ArrayList<>();
+
                     for (AudioRecord record : selectedRecords) {
                         filepaths.add(record.getFilePath());
                         filenames.add(record.getFilename());
                     }
+
                     intent.putStringArrayListExtra("filepaths", filepaths);
                     intent.putStringArrayListExtra("filenames", filenames);
                     intent.putExtra("albName", albName);
 
-                    startActivity(intent);
+                    // startActivity(intent);
                     startActivityForResult(intent,1);
                 } else {
                     // If no audio record is selected, display a message
@@ -416,35 +421,47 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 }
             }
         });
-
-
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                fetchAll();
+            }
+        }
+
+        leaveEditMode();
+    }
+
     @Override
     public void onResume(Bundle savedInstanceState){
         super.onResume();
-        fetchAll();
-        leaveEditMode();
     }
+
     private void hideKeyBoard(View v){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
     private void leaveEditMode() {
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+
+        if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
         }
+
         editbar.setVisibility(View.GONE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
         for (AudioRecord rc : records ) {
             rc.setChecked(false);
         }
+
         mAdapter.setEditMode(false);
-
     }
-
-
 
     private void disableRename() {
         btnRename.setClickable(false);
@@ -497,7 +514,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 List<AudioRecord> queryResult = db.audioRecordDao().searchDatabase(String.format("%%%s%%",query));
                 records.addAll(queryResult);
 
-
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -515,18 +531,16 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             public void run() {
                 List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
                 records.clear();
-                if(listRecID != null){
+
+                if (listRecID != null) {
                     for (int id: listRecID)
                     {
-                        AudioRecord temp = new AudioRecord();
-                        temp = db.audioRecordDao().getRecbyID(id);
+                        AudioRecord temp = db.audioRecordDao().getRecbyID(id);
                         if(temp != null) records.add(temp);
                     }
 
 //                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
 //                records.addAll(queryResult);
-
-
                 }
                 runOnUiThread(new Runnable() {
                     @Override
@@ -534,7 +548,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         mAdapter.notifyDataSetChanged();
                     }
                 });
-
             }
         }).start();
     }
