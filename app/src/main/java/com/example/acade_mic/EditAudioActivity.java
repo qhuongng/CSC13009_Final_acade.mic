@@ -263,7 +263,21 @@ public class EditAudioActivity extends AppCompatActivity {
                 float start = rangeSlider.getValues().get(0);
                 float end = rangeSlider.getValues().get(1);
                 String newFileName = fileNameInput.getText().toString();
-                cutAudioFile(newFileName, fileName, filePath, start, end);
+                int check = 0;
+                for(AudioRecord record : records)
+                {
+                    if(newFileName.equals(record.getFilename()))
+                    {
+                        check++;
+                    }
+                }
+                if(check > 0)
+                {
+                    Toast.makeText(this, "File name already exist", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    cutAudioFile(newFileName, fileName, filePath, start, end);
+                }
             }
         });
 
