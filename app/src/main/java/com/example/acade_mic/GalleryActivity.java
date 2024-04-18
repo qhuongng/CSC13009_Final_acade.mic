@@ -130,13 +130,22 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         addToAlbBehavior.setPeekHeight(0);
         addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         bottomSheetBG = findViewById(R.id.bottomSheetBG);
-        bottomSheet.setOnClickListener(new View.OnClickListener() {
+        bottomSheetBG.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 bottomSheetBG.setVisibility(View.GONE);
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }, 50);
+                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
+                    ActionBar actionBar = getSupportActionBar();
+                    if(actionBar != null){
+                        actionBar.setDisplayHomeAsUpEnabled(false);
+                        actionBar.setDisplayShowHomeEnabled(false);
+                    }
+                    editbar.setVisibility(View.VISIBLE);
+                }
             }
         });
 
