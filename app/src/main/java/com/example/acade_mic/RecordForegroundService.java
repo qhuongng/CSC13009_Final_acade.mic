@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
 
 import java.io.FileNotFoundException;
@@ -363,6 +364,8 @@ public class RecordForegroundService extends Service implements Timer.OnTimerTic
                 @Override
                 public void run() {
                     db.audioRecordDao().insert(record);
+                    AudioRecord check = db.audioRecordDao().searchDatabase(record.getFilename()).get(0);
+                    db.albumDao().insert(new Album("All Records", check.getId()));
                 }
             }).start();
             isAlarmRecording = false;
