@@ -156,26 +156,27 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         AlbumPopupAdapter adapter = new AlbumPopupAdapter(albumNames, new OnAlbumItemClickListener() {
             @Override
             public void onAlbumItemClick(String album) {
+                ArrayList<AudioRecord> ischecked = new ArrayList<>();
+                for(AudioRecord ar : records){
+                    if(ar.isChecked())ischecked.add(ar);
+                }
+
                 if(albName.equals("Delete")){
                     // hủy hẹn giờ
                     JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                    for(AudioRecord ar : records){
-                        if(ar.isChecked()){
-                            jobScheduler.cancel(ar.getId());
-                        }
+                    for(AudioRecord ar : ischecked){
+                        jobScheduler.cancel(ar.getId());
                     }
                     //chuyển về album tổng
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            for (AudioRecord ar : records) {
-                                if(ar.isChecked()){
-                                    records.remove(ar);
-                                    db.albumDao().deleteByIdRecord(ar.getId());
-                                    db.albumDao().insert(new Album("All Records", ar.getId()));
-                                    if(!album.equals("All Records")){
-                                        db.albumDao().insert(new Album(album, ar.getId()));
-                                    }
+                            for (AudioRecord ar : ischecked) {
+                                records.remove(ar);
+                                db.albumDao().deleteByIdRecord(ar.getId());
+                                db.albumDao().insert(new Album("All Records", ar.getId()));
+                                if(!album.equals("All Records")){
+                                    db.albumDao().insert(new Album(album, ar.getId()));
                                 }
                             }
                             runOnUiThread(new Runnable() {
@@ -196,8 +197,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            for (AudioRecord ar : records) {
-                                if(ar.isChecked()){
+                            for (AudioRecord ar : ischecked) {
                                     Album check = db.albumDao().checkExists(album, ar.getId());
                                     if(check == null){
                                         db.albumDao().insert(new Album(album, ar.getId()));
@@ -209,7 +209,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                             }
                                         });
                                     }
-                                }
                             }
                             runOnUiThread(new Runnable() {
                                 @Override
