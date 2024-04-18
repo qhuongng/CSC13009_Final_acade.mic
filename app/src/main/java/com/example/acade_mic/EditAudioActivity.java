@@ -127,7 +127,7 @@ public class EditAudioActivity extends AppCompatActivity {
         selectedItemsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         selectedItemsRecyclerView.setAdapter(selectedItemsAdapter);
 
-        tvFilename.setText("EDIT AUDIO");
+        tvFilename.setText("Edit audio");
 
         spinner = findViewById(R.id.fileSpinner);
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, fileNames);

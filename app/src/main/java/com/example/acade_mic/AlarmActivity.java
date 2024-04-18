@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.example.acade_mic.adapter.AlarmAdapter;
 import com.example.acade_mic.model.Alarm;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -40,15 +41,15 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
     AlarmAdapter alarmAdapter;
     AppDatabase db;
     Button addBtn;
-    EditText startDate;
-    EditText totalDuration;
+    TextInputEditText startDate;
+    TextInputEditText totalDuration;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alarm);
-        startDate = (EditText) findViewById(R.id.startDate);
-        totalDuration = (EditText) findViewById(R.id.totalDuration);
+        startDate = (TextInputEditText) findViewById(R.id.startDate);
+        totalDuration = (TextInputEditText) findViewById(R.id.totalDuration);
         alarms = new ArrayList<>();
 
         db = AppDatabase.getInstance(this);
@@ -99,6 +100,11 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
 
         addBtn = (Button) findViewById(R.id.addBtn);
         addBtn.setOnClickListener((View v) -> {
+            if (startDate.getText().toString().isEmpty() || totalDuration.getText().toString().isEmpty()) {
+                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_LONG).show();
+                return;
+            }
+
             String startDateTime = startDate.getText().toString() + " " + formatTime(startHour.getValue(), startMin.getValue(), startSec.getValue());
             long totalDurationSec = Integer.parseInt(String.valueOf(totalDuration.getText()));
 
@@ -133,10 +139,10 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
                             isAddable = false;
                         }
                     }
-                    if(toBeInserted.getStartTimeMillis() < System.currentTimeMillis() + 30000L){
+                    if (toBeInserted.getStartTimeMillis() < System.currentTimeMillis() + 30000L){
                         isAddable = false;
                     }
-                    if(isAddable){
+                    if (isAddable) {
                         db.alarmDao().insert(toBeInserted);
                         runOnUiThread(new Runnable() {
                             @Override
@@ -152,7 +158,7 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
                                 alarmAdapter.notifyDataSetChanged();
                             }
                         });
-                    }else{
+                    } else {
                         runOnUiThread(()->{
                             Toast.makeText(getApplicationContext(), "Cannot add this alarm", Toast.LENGTH_SHORT).show();
                         });

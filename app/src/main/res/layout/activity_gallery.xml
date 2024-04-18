@@ -30,9 +30,7 @@
                 android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingEnd="16dp"
-                android:paddingStart="16dp"
-                android:padding="8dp">
+                android:padding="16dp">
                 <ImageButton
                     android:id="@+id/btnClose"
                     android:background="@drawable/ic_close"

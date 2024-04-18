@@ -1,5 +1,4 @@
 <resources>
-
     <style name="Widget.Academic.AppWidget.Container" parent="android:Widget">
         <item name="android:id">@android:id/background</item>
         <item name="android:background">?android:attr/colorBackground</item>
@@ -7,6 +6,6 @@
 
     <style name="Widget.Academic.AppWidget.InnerView" parent="android:Widget">
         <item name="android:background">?android:attr/colorBackground</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:textColor">?android:attr/textColor</item>
     </style>
 </resources>

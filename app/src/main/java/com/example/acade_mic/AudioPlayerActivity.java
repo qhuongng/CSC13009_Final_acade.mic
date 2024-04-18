@@ -85,13 +85,11 @@ import java.util.concurrent.Executors;
 public class AudioPlayerActivity extends AppCompatActivity implements OnItemClickListener, AsyncAudioTranscriptor.TranscriptionCallback {
     private MediaPlayer mediaPlayer;
     private MaterialToolbar toolbar;
-    private View editbar;
-    private ImageButton btnClose;
     private View bottomSheetBG;
     private ImageButton btnReviewAlarm;
     final Calendar myCalendar = Calendar.getInstance();
     private MaterialButton addBtn;
-    private EditText startDate;
+    private TextInputEditText startDate;
     private TextView tvFilename;
     private TextView tvTrackProgress;
     private TextView tvTrackDuration;
@@ -201,7 +199,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         addReviewRecordBehavior = BottomSheetBehavior.from(findViewById(R.id.add_review_audio));
         addReviewRecordBehavior.setPeekHeight(0);
         addReviewRecordBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-        // thêm bookmarl
+        // thêm bookmark
         addBookmarkBehavior = BottomSheetBehavior.from((findViewById(R.id.popup_insert_note)));
         addBookmarkBehavior.setPeekHeight(0);
         addBookmarkBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -210,7 +208,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         addTextNote = findViewById(R.id.addTextNote);
         // khai báo các button cho add bookmark
 
-        editbar = findViewById(R.id.editBar);
         startDate = findViewById(R.id.startDate);
         DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
             @Override
@@ -260,6 +257,18 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
         addBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                if (startDate.getText().toString().isEmpty()) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getBaseContext(), "Please fill in all fields", Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                    return;
+                }
+
                 String startDateTime = startDate.getText().toString() + " " + formatTime(startHour.getValue(), startMin.getValue(), startSec.getValue());
                 LocalDateTime localDateTime = LocalDateTime.parse(startDateTime,
                         DateTimeFormatter.ofPattern("dd/MM/yyy HH:mm:ss"));
@@ -273,11 +282,12 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                         check = db.reviewAlarmDao().getReviewAlarm(id);
                     }
                 }).start();
-                if(check!= null && check.getStartTime() == startTimeMillis){
+
+                if (check != null && check.getStartTime() == startTimeMillis){
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getBaseContext(),"This Alarm have already exists",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getBaseContext(),"A reminder for this recording already exists",Toast.LENGTH_SHORT).show();
                         }
                     });
                 } else {
@@ -294,21 +304,15 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                             db.reviewAlarmDao().insert(rv);
                         }
                     }).start();
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(getBaseContext(),"Create ReviewAlarm success",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getBaseContext(),"Reminder set successfully",Toast.LENGTH_SHORT).show();
                             leaveAlarmReview();
                         }
                     });
                 }
-            }
-        });
-        btnClose = findViewById(R.id.btnClose);
-        btnClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                leaveAlarmReview();
             }
         });
 
@@ -320,9 +324,10 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     @Override
                     public void run() {
                         ReviewAlarm reviewAlarm = db.reviewAlarmDao().getReviewAlarm(id);
-                        if(reviewAlarm != null){
+
+                        if (reviewAlarm != null){
                             long time = reviewAlarm.getStartTime();
-                            if(time + 120L*1000L > System.currentTimeMillis()){
+                            if (time + 120L*1000L > System.currentTimeMillis()){
                                 Instant instant = Instant.ofEpochMilli(time);
                                 LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
                                 // Lấy giá trị ngày và giờ từ LocalDateTime
@@ -463,7 +468,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             public void run() {
                 seekBar.setProgress(mediaPlayer.getCurrentPosition());
                 tvTrackProgress.setText(dateFormat(mediaPlayer.getCurrentPosition()));
-                handler.postDelayed(runnable,delay);
+                handler.postDelayed(runnable, delay);
             }
         };
 
@@ -507,6 +512,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     playBackSpeed += 0.5f;
                 else
                     playBackSpeed = 0.5f;
+
                 PlaybackParams params = new PlaybackParams();
                 params.setSpeed(playBackSpeed);
                 mediaPlayer.setPlaybackParams(params);
@@ -609,7 +615,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     public void dismiss() {
         bottomSheetBG.setVisibility(View.GONE);
         hideKeyBoard(addTextNote);
-        if(!mediaPlayer.isPlaying()) mediaPlayer.start();
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             addBookmarkBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
         }, 50);
