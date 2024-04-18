@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.Activity;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
@@ -81,7 +82,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         albumNames = getIntent().getStringArrayListExtra("listAlb");
         albumNames.remove("Delete");
         albumNames.remove("All Records");
-        if(!albName.equals("Delete")){
+        if (!albName.equals("Delete")) {
             albumNames.remove(albName);
         }
 
@@ -89,7 +90,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         toolbar.setTitle(albName);
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+        if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
         }
@@ -103,6 +104,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnRename = findViewById(R.id.btnEdit);
         btnDelete = findViewById(R.id.btnDelete);
         btnShare = findViewById(R.id.btnShare);
+
         btnEditAudio = findViewById(R.id.btnEditAudio);
         btnAddToAlb = findViewById(R.id.btnAddToAlb);
 
@@ -111,7 +113,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         tvShare = findViewById(R.id.tvShare);
         tvEditAudio = findViewById(R.id.tvEditAudio);
         tvAddToAlb = findViewById(R.id.tvAddtoAlb);
-        if(albName.equals("Delete")){
+        if (albName.equals("Delete")) {
             btnAddToAlb.setImageResource(R.drawable.ic_restore);
             tvAddToAlb.setText("Restore");
         }
@@ -157,14 +159,14 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void onAlbumItemClick(String album) {
                 ArrayList<AudioRecord> ischecked = new ArrayList<>();
-                for(AudioRecord ar : records){
-                    if(ar.isChecked())ischecked.add(ar);
+                for (AudioRecord ar : records) {
+                    if (ar.isChecked()) ischecked.add(ar);
                 }
 
-                if(albName.equals("Delete")){
+                if (albName.equals("Delete")) {
                     // hủy hẹn giờ
                     JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
-                    for(AudioRecord ar : ischecked){
+                    for (AudioRecord ar : ischecked) {
                         jobScheduler.cancel(ar.getId());
                     }
                     //chuyển về album tổng
@@ -175,7 +177,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 records.remove(ar);
                                 db.albumDao().deleteByIdRecord(ar.getId());
                                 db.albumDao().insert(new Album("All Records", ar.getId()));
-                                if(!album.equals("All Records")){
+                                if (!album.equals("All Records")) {
                                     db.albumDao().insert(new Album(album, ar.getId()));
                                 }
                             }
@@ -183,7 +185,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 @Override
                                 public void run() {
                                     mAdapter.notifyDataSetChanged();
-                                    Toast.makeText(getBaseContext(),"Restore/Add to Album completed", Toast.LENGTH_SHORT ).show();
+                                    Toast.makeText(getBaseContext(), "Restore/Add to Album completed", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -198,22 +200,22 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         @Override
                         public void run() {
                             for (AudioRecord ar : ischecked) {
-                                    Album check = db.albumDao().checkExists(album, ar.getId());
-                                    if(check == null){
-                                        db.albumDao().insert(new Album(album, ar.getId()));
-                                    }else{
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(getBaseContext(),"The selected album contains" + ar.getFilename(), Toast.LENGTH_SHORT ).show();
-                                            }
-                                        });
-                                    }
+                                Album check = db.albumDao().checkExists(album, ar.getId());
+                                if (check == null) {
+                                    db.albumDao().insert(new Album(album, ar.getId()));
+                                } else {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast.makeText(getBaseContext(), "The selected album contains" + ar.getFilename(), Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                                }
                             }
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getBaseContext(),"Restore/Add to Album completed", Toast.LENGTH_SHORT ).show();
+                                    Toast.makeText(getBaseContext(), "Restore/Add to Album completed", Toast.LENGTH_SHORT).show();
                                 }
                             });
 
@@ -255,15 +257,15 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void onClick(View v) {
                 allChecked = !allChecked;
-                for (AudioRecord rc : records ) {
+                for (AudioRecord rc : records) {
                     rc.setChecked(allChecked);
                 }
                 mAdapter.notifyDataSetChanged();
 
-                if(allChecked){
+                if (allChecked) {
                     disableRename();
                     enableDelete();
-                }else {
+                } else {
                     disableRename();
                     disableDelete();
                 }
@@ -280,7 +282,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         break;
                     }
                 }
-                if(toBeShared != null){
+                if (toBeShared != null) {
                     File file = new File(toBeShared.getFilePath());
                     Uri uri = FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getApplicationContext().getPackageName() + ".provider", file);
 
@@ -297,7 +299,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(!albName.equals("Delete")){
+                if (!albName.equals("Delete")) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
                     builder.setTitle("Delete record?");
                     final int nbRecords = countSelectedRecords(records);
@@ -311,24 +313,23 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 if (record.isChecked()) {
                                     toDelete.add(record);
                                     PersistableBundle extras = new PersistableBundle();
-                                    extras.putString("filePath",record.getFilePath());
+                                    extras.putString("filePath", record.getFilePath());
                                     extras.putInt("id", record.getId());
-                                    JobInfo.Builder builder = new JobInfo.Builder(record.getId(),new ComponentName(getBaseContext(), FileDeleteJobService.class));
+                                    JobInfo.Builder builder = new JobInfo.Builder(record.getId(), new ComponentName(getBaseContext(), FileDeleteJobService.class));
                                     builder.setExtras(extras);
                                     builder.setMinimumLatency(30L * 24 * 60 * 60 * 1000L);
                                     JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
                                     jobScheduler.schedule(builder.build());
                                 }
                             }
-
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if(db == null) db = AppDatabase.getInstance(getBaseContext());
-                                    for(AudioRecord ar : toDelete){
+                                    if (db == null) db = AppDatabase.getInstance(getBaseContext());
+                                    for (AudioRecord ar : toDelete) {
                                         db.albumDao().deleteByIdRecord(ar.getId());
                                         db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
-                                        db.albumDao().insert(new Album("Delete",ar.getId()));
+                                        db.albumDao().insert(new Album("Delete", ar.getId()));
                                     }
                                     runOnUiThread(new Runnable() {
                                         @Override
@@ -353,9 +354,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
                     AlertDialog dialog = builder.create();
                     dialog.show();
-                }
-                else {
-
+                } else {
                     AlertDialog.Builder builder = new AlertDialog.Builder(GalleryActivity.this);
                     builder.setTitle("Delete record permanently?");
                     final int nbRecords = countSelectedRecords(records);
@@ -369,14 +368,14 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 if (record.isChecked()) {
                                     toDelete.add(record);
                                     File delFile = new File(record.getFilePath());
-                                    if(delFile != null)  delFile.delete();
+                                    if (delFile != null) delFile.delete();
                                 }
                             }
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
                                     db.audioRecordDao().delete(toDelete);
-                                    for(AudioRecord ar : toDelete){
+                                    for (AudioRecord ar : toDelete) {
                                         db.albumDao().deleteByIdRecord(ar.getId());
                                         db.bookmarkDao().deleteBookmarksByRecordId(ar.getId());
                                         db.transcriptionFileDao().delete(ar.getId());
@@ -406,6 +405,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     dialog.show();
                 }
             }
+
             private int countSelectedRecords(ArrayList<AudioRecord> records) {
                 int count = 0;
                 for (AudioRecord record : records) {
@@ -441,7 +441,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         @Override
                         public void onClick(View v) {
                             hideKeyBoard(dialogView);
-                            String newFileName  = textInput.getText().toString();
+                            String newFileName = textInput.getText().toString();
                             if (newFileName.isEmpty()) {
                                 Toast.makeText(GalleryActivity.this, "A name is required", Toast.LENGTH_LONG).show();
                             } else if (!newFileName.contains(".mp3")) {
@@ -449,10 +449,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                             } else {
                                 String oldFileName = finalRecord.getFilename();
                                 int check = 0;
-                                for (AudioRecord record:records) {
-                                    if(newFileName.equals(record.getFilename())) check++;
+                                for (AudioRecord record : records) {
+                                    if (newFileName.equals(record.getFilename())) check++;
                                 }
-                                if(check > 0) {
+                                if (check > 0) {
                                     Toast.makeText(GalleryActivity.this, "File name has been exists", Toast.LENGTH_SHORT).show();
                                 } else {
                                     File oldFile = new File(finalRecord.getFilePath());
@@ -524,8 +524,8 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     intent.putStringArrayListExtra("filenames", filenames);
                     intent.putExtra("albName", albName);
 
-                    startActivity(intent);
-                    startActivityForResult(intent,1);
+
+                    startActivityForResult(intent, 1);
                 } else {
                     // If no audio record is selected, display a message
                     Toast.makeText(GalleryActivity.this, "No audio record selected", Toast.LENGTH_SHORT).show();
@@ -539,7 +539,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 addToAlbBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
                 bottomSheetBG.setVisibility(View.VISIBLE);
                 ActionBar actionBar = getSupportActionBar();
-                if(actionBar != null){
+                if (actionBar != null) {
                     actionBar.setDisplayHomeAsUpEnabled(true);
                     actionBar.setDisplayShowHomeEnabled(true);
                 }
@@ -547,29 +547,44 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
-
     }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (resultCode == Activity.RESULT_OK) {
+                fetchAll();
+            }
+        }
+
+        leaveEditMode();
+    }
+
     @Override
     public void onResume(Bundle savedInstanceState){
         super.onResume();
-        fetchAll();
-        leaveEditMode();
     }
+
     private void hideKeyBoard(View v){
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
     private void leaveEditMode() {
         ActionBar actionBar = getSupportActionBar();
-        if(actionBar != null){
+
+        if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
         }
+
         editbar.setVisibility(View.GONE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+
         for (AudioRecord rc : records ) {
             rc.setChecked(false);
         }
+
         mAdapter.setEditMode(false);
 
     }
@@ -657,13 +672,16 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 List<Integer> listRecID = db.albumDao().getAllrecordIDbyAlbumName(albName);
 
                 records.clear();
-                if(listRecID != null){
+
+                if (listRecID != null) {
                     for (int id: listRecID)
                     {
-                        AudioRecord temp = new AudioRecord();
-                        temp = db.audioRecordDao().getRecbyID(id);
+                        AudioRecord temp = db.audioRecordDao().getRecbyID(id);
                         if(temp != null) records.add(temp);
                     }
+
+//                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
+//                records.addAll(queryResult);
                 }
                 runOnUiThread(new Runnable() {
                     @Override
