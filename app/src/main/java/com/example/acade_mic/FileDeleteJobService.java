@@ -10,9 +10,10 @@ import java.io.File;
 
 public class FileDeleteJobService extends JobService {
 
-    AppDatabase db = AppDatabase.getInstance(this);
+
     @Override
     public boolean onStartJob(JobParameters params) {
+        AppDatabase db = AppDatabase.getInstance(this);
         PersistableBundle extras = params.getExtras();
         if (extras != null) {
             String path = extras.getString("filePath");
@@ -29,6 +30,7 @@ public class FileDeleteJobService extends JobService {
                 }
             }).start();
             jobFinished(params,false);
+
             return true;
         }
         return false;

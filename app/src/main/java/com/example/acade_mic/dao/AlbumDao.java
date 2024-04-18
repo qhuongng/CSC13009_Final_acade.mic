@@ -38,4 +38,6 @@ public interface AlbumDao {
     @Query("delete from albums where recordID = :id")
     void deleteByIdRecord(int id);
 
+    @Query("select * from albums where albumName =:albName and recordID =:id")
+    Album checkExists(String albName, int id);
 }

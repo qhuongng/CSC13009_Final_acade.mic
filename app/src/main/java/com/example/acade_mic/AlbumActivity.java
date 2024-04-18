@@ -391,8 +391,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        Album tmp = new Album(newAlbumName);
-                        db.albumDao().insert(tmp);
+                        db.albumDao().insert(new Album(newAlbumName));
                         albumNames.add(newAlbumName);
                         runOnUiThread(new Runnable() {
                             @Override
@@ -435,7 +434,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             String albumName = albumNames.get(position);
             Intent intent = new Intent(this, GalleryActivity.class);
             intent.putExtra("albumName", albumName);
-
+            intent.putStringArrayListExtra("listAlb",albumNames);
             startActivity(intent);
 
         }catch(Exception exception){

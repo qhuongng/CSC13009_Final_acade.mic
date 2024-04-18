@@ -235,8 +235,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                     public void run() {
                         db.audioRecordDao().insert(record);
                         AudioRecord temp = db.audioRecordDao().searchDatabase(record.getFilename()).get(0);
-                        Album alb = new Album("All Records");
-                        alb.setRecordID(temp.getId());
+                        Album alb = new Album("All Records", temp.getId());
                         db.albumDao().insert(alb);
                     }
                 }).start();

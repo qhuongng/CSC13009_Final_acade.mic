@@ -1,6 +1,7 @@
 package com.example.acade_mic.model;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -11,7 +12,7 @@ public class Album {
     private int id;
     @NonNull
     private String albumName;
-
+    @Nullable
     private int recordID;
     public Album(){}
     public Album(String albumName){

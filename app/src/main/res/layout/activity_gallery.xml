@@ -90,7 +90,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:layout_marginEnd="60dp"
+            android:layout_marginEnd="35dp"
             >
             <ImageButton
                 android:id="@+id/btnDelete"
@@ -109,14 +109,37 @@
                 android:textColor="@color/disabledDarkGray"
                 android:text="Delete"/>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="35dp"
+            >
+            <ImageButton
+                android:id="@+id/btnAddToAlb"
+                android:clickable="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_add_to_alb"
+                app:tint="@color/disabledDarkGray"
+                android:layout_gravity="center"/>
 
+            <TextView
+                android:id="@+id/tvAddtoAlb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/disabledDarkGray"
+                android:text="Add to Alb"/>
+        </LinearLayout>
         <LinearLayout
 
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:layout_marginEnd="60dp">
+            android:layout_marginEnd="35dp">
             <ImageButton
                 android:id="@+id/btnEdit"
                 android:clickable="false"
@@ -138,7 +161,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:layout_marginEnd="60dp">
+            android:layout_marginEnd="35dp">
             <ImageButton
                 android:id="@+id/btnEditAudio"
                 android:clickable="false"
@@ -177,4 +200,12 @@
                 android:text="Share"/>
         </LinearLayout>
     </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:id="@+id/bottomSheetBG"
+        android:background="@color/opaqueBG"/>
+
+    <include layout="@layout/popup_albumlist"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
