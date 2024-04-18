@@ -524,7 +524,13 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if(fromUser){
                     mediaPlayer.seekTo(progress);
-                    mediaPlayer.start();
+                    if(mediaPlayer.isPlaying()){
+                        mediaPlayer.start();
+                    } else {
+                        btnPlay.setBackground(ResourcesCompat.getDrawable(getResources(),R.drawable.ic_pause_circle, getTheme()));
+                        mediaPlayer.start();
+                        handler.postDelayed(runnable, delay);
+                    }
                 }
             }
             @Override

@@ -118,7 +118,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
             @Override
             public void onClick(View v) {
                 if (!selectedAlbum.equals("") && !selectedAlbum.isEmpty()) {
-                    if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Deleted")) {
+                    if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Delete")) {
                         Toast.makeText(AlbumActivity.this, "Unable to rename default album!", Toast.LENGTH_SHORT).show();
                     } else {
 
@@ -179,7 +179,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (!selectedAlbum.equals("") && !selectedAlbum.isEmpty()) {
-                            if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Deleted")) {
+                            if (selectedAlbum.equals("All Records") || selectedAlbum.equals("Delete")) {
                                 Toast.makeText(AlbumActivity.this, "Unable to delete default album!", Toast.LENGTH_SHORT).show();
                             } else {
                                 ArrayList<Integer> recID = new ArrayList<>();
@@ -334,8 +334,8 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                 }
                 albumNames.addAll(name);
 
-                if(!name.contains("Deleted")){
-                        Album delRec = new Album("Deleted");
+                if(!name.contains("Delete")){
+                        Album delRec = new Album("Delete");
                         albumNames.add(delRec.getAlbumName());
                         db.albumDao().insert(delRec);
                 }
