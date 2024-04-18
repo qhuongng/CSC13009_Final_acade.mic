@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.WRITE_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 
     <application
         android:allowBackup="true"
@@ -21,29 +25,54 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Academic"
         tools:targetApi="31">
+        <activity
+            android:name=".AlarmActivity"
+            android:exported="false" />
+
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
         <receiver
             android:name=".RecorderWidget"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.acade_mic.RecorderWidget.TIME_PAUSED" />
+                <action android:name="com.example.acade_mic.RecorderWidget.TIME_UPDATE" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PLAY_BUTTON_SWITCH" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON" />
+                <action android:name="com.example.acade_mic.RecorderWidget.PAUSE_BUTTON_SWITCH" />
             </intent-filter>
 
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/recorder_widget_info" />
         </receiver>
-
+        <service android:name=".FileDeleteJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
         <activity
             android:name=".AudioPlayerActivity"
             android:exported="false" />
         <activity
             android:name=".GalleryActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustPan" />
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".AlbumActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -51,12 +80,22 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <service
+            android:enabled="true"
             android:name=".RecordForegroundService"
-            android:foregroundServiceType="microphone"/>
+            android:foregroundServiceType="microphone" />
+        <activity
+            android:name=".EditAudioActivity">
+        </activity>
+        <service android:name=".ReviewAlarmService"
+            android:enabled="true"
+            android:foregroundServiceType="remoteMessaging"
+            tools:ignore="ForegroundServicePermission" />
     </application>
 
 </manifest>

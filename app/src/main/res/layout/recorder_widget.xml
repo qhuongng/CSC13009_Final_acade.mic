@@ -1,55 +1,56 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/Widget.Academic.AppWidget.Container"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:theme="@style/Theme.Academic.AppWidgetContainer"
-    >
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:background="@xml/rounded_rect"
+    style="@style/Widget.Academic.AppWidget.Container">
 
     <TextView
         android:id="@+id/appwidget_text"
-        style="@style/Widget.Academic.AppWidget.InnerView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
+        android:layout_alignParentLeft="true"
         android:text="00:00"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:textSize="15sp"
-        android:textStyle="bold|italic" />
+        android:textColor="@color/textColor"
+        android:textSize="40sp" />
 
     <TextView
-        android:layout_width="100sp"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:textSize="15sp"
-        android:text="NOT RECORDING"
-        android:textStyle="bold"
-        android:gravity="center_vertical"
         android:id="@+id/status"
-        />
-
-    <Button
-        android:layout_width="wrap_content"
+        android:layout_width="140dp"
         android:layout_height="wrap_content"
-        android:src="@drawable/ic_play"
-        android:layout_gravity="center_vertical"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@id/appwidget_text"
+        android:layout_marginHorizontal="15dp"
+        android:text="NOT RECORDING"
+        android:textSize="15sp"
+        android:textColor="@color/textColor" />
+
+    <ImageButton
         android:id="@+id/widget_play_btn"
-        android:textSize="15sp"
-        android:text="Play"
-        android:visibility="visible"
-        />
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:background="@drawable/ic_record_ripple"
+        android:padding="5dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_rec"
+        android:visibility="visible" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:src="@drawable/ic_play"
-        android:layout_gravity="center_vertical"
+    <ImageButton
         android:id="@+id/widget_pause_btn"
-        android:textSize="15sp"
-        android:text="Pause"
-        android:visibility="gone"
-        />
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:background="@drawable/ic_stop_ripple"
+        android:padding="5dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_pause"
+        android:visibility="gone" />
 
-</LinearLayout>
+</RelativeLayout>

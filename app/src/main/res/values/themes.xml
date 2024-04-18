@@ -30,11 +30,22 @@
         <item name="boxCornerRadiusTopEnd">26dp</item>
     </style>
 
+    <style name="AlarmTextLayoutStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">@color/gray</item>
+        <item name="boxStrokeColor">@color/strokeColor</item>
+
+        <item name="boxCornerRadiusBottomStart">26dp</item>
+        <item name="boxCornerRadiusBottomEnd">26dp</item>
+        <item name="boxCornerRadiusTopStart">26dp</item>
+        <item name="boxCornerRadiusTopEnd">26dp</item>
+    </style>
+
     <style name="SearchInputStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxBackgroundColor">@color/gray</item>
         <item name="boxStrokeWidth">0dp</item>
         <item name="boxStrokeWidthFocused">0dp</item>
-        <item name="android:layout_margin">16dp</item>
+        <item name="android:layout_marginVertical">16dp</item>
+        <item name="android:layout_marginHorizontal">26dp</item>
 
         <item name="boxCornerRadiusBottomStart">36dp</item>
         <item name="boxCornerRadiusBottomEnd">36dp</item>

@@ -1,14 +1,9 @@
 package com.example.acade_mic;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -19,33 +14,27 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.View;
-import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RemoteViews;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.room.Room;
 
+import com.example.acade_mic.model.Album;
+import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -54,7 +43,13 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
     public final int REQUEST_CODE = 200;
+    public final int REQUEST_CODE2 = 201;
+    public final int REQUEST_CODE3 = 202;
+
     public static boolean permissionGranted;
+    public static boolean permissionGranted2;
+    public static boolean permissionGranted3;
+
     public ImageButton btnRec;
     public ImageButton btnDel;
     public ImageButton btnOk;
@@ -85,15 +80,25 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         if(recordService != null && recordService.isRecording && recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD PAUSE");
             pauseRec(FROM_WIDGET);
             syncPauseTime();
         }else if(recordService != null && recordService.isRecording && !recordService.isPaused){
             path = recordService.path;
             fileName = recordService.fileName;
-            System.out.println("SHOULD RESUME");
             resumeRec(FROM_WIDGET);
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Override
+    protected void onDestroy() {
+        if (db.isOpen()) {
+            db.close();
+        }
+
+        Toast.makeText(this, "destroyed", Toast.LENGTH_SHORT).show();
+
+        super.onDestroy();
     }
 
     @Override
@@ -102,16 +107,20 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         records = new ArrayList<AudioRecord>();
         setContentView(R.layout.activity_main);
         permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        permissionGranted2 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED;
+        permissionGranted3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_MICROPHONE) == PackageManager.PERMISSION_GRANTED;
 
         if (!permissionGranted) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
         }
 
-        db = Room.databaseBuilder(
-                getApplicationContext(),
-                AppDatabase.class,
-                "audioRecords"
-        ).build();
+        if (!permissionGranted2) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE}, REQUEST_CODE2);
+        }
+
+        if (!permissionGranted3) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE_MICROPHONE}, REQUEST_CODE3);
+        }
         db = AppDatabase.getInstance(this);
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -150,7 +159,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
 
         btnRecList = findViewById(R.id.btnRecList);
         btnRecList.setOnClickListener((View v) -> {
-            Intent intent = new Intent(this, GalleryActivity.class);
+//            Intent intent = new Intent(this, GalleryActivity.class);
+            Intent intent = new Intent(this, AlbumActivity.class);
             startActivity(intent);
 
         });
@@ -158,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel = (ImageButton) findViewById(R.id.btnDel);
         btnDel.setOnClickListener((View v) -> {
             stopRec();
-            Toast.makeText(this, "Del btn", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Delete record complete", Toast.LENGTH_SHORT).show();
         });
 
         btnOk = (ImageButton) findViewById(R.id.btnOk);
@@ -195,7 +205,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             dismiss();
         });
 
+        Button schedulerBtn = (Button) findViewById(R.id.schedulerBtn);
+        schedulerBtn.setOnClickListener((View v)->{
+            Intent startSchedulerIntent = new Intent(this, AlarmActivity.class);
+            startActivity(startSchedulerIntent);
+        });
     }
+
 
     public void save() {
         String newFileName = fileNameInput.getText().toString();
@@ -207,7 +223,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                 if(newFileName.equals(record.getFilename())) check++;
             }
             if(check > 0) {
-                Toast.makeText(this, "File name has been exists", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "File name has existed", Toast.LENGTH_SHORT).show();
             } else {
             String newFilePath = recordService.path + newFileName;
             long timestamp = new Date().getTime();
@@ -218,6 +234,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
                     @Override
                     public void run() {
                         db.audioRecordDao().insert(record);
+                        AudioRecord temp = db.audioRecordDao().searchDatabase(record.getFilename()).get(0);
+                        Album alb = new Album("All Records", temp.getId());
+                        db.albumDao().insert(alb);
                     }
                 }).start();
                 Toast.makeText(this, "Save record file successfully", Toast.LENGTH_SHORT).show();
@@ -231,6 +250,10 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             public void run() {
                 List<AudioRecord> queryResult = db.audioRecordDao().getAll();
                 records.addAll(queryResult);
+//                db.albumDao().insert(new Album("All record",1));
+//                db.albumDao().insert(new Album("All record",2));
+//                db.albumDao().insert(new Album("All record",3));
+//                db.albumDao().insert(new Album("Album 1",2));
             }
         }).start();
     }
@@ -267,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh:mm:ss", Locale.ENGLISH);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
         recordService.startFromActivity(path, fileName);
@@ -311,13 +334,13 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         timer.pause();
         // change the button
         btnRec.setImageResource(R.drawable.ic_rec);
-        btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
+        btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
     }
 
     public void stopRec() {
         timer.stop();
 
-        recordService.stop();
+        recordService.stop(false);
 
         btnRecList.setVisibility(View.VISIBLE);
         btnOk.setVisibility(View.GONE);
@@ -325,6 +348,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         btnDel.setClickable(false);
 
         btnRec.setImageResource(R.drawable.ic_rec);
+        btnRec.setBackgroundResource(R.drawable.ic_record_ripple);
         tvTimer.setText("00:00:00");
         amplitudes = waveformView.clear();
     }
@@ -341,6 +365,8 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             tvTimer.setText(recordService.currentTime);
             this.duration = recordService.currentTime.substring(0, recordService.currentTime.length() - 3);
             waveformView.addAmplitude((float) recordService.recorder.getMaxAmplitude());
+        }else{
+            tvTimer.setText("00:00.00");
         }
     }
 
