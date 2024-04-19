@@ -1,7 +1,10 @@
 package com.example.acade_mic;
 
+import static android.content.Intent.getIntent;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -29,7 +32,15 @@ public class ReviewAlarmService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null){
+
             String filename = intent.getStringExtra("filename");
+            String filePath = intent.getStringExtra("filepath");
+            int id =  intent.getIntExtra("id",0);
+            Intent notiIntent = new Intent(this, AudioPlayerActivity.class);
+            notiIntent.putExtra("filepath", filePath);
+            notiIntent.putExtra("filename", filename);
+            notiIntent.putExtra("id", id);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notiIntent, PendingIntent.FLAG_UPDATE_CURRENT);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_clock)
                     .setContentTitle("Review Alarm")
@@ -38,9 +49,9 @@ public class ReviewAlarmService extends Service {
                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)//to show content in lock screen
                     .setOngoing(true)
                     .setAutoCancel(true)
-                    .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE);
+                    .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+                    .setContentIntent(pendingIntent);
             startForeground(99, builder.build());
-
         }
         return START_STICKY;
     }
