@@ -1,6 +1,7 @@
 package com.example.acade_mic;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaCodec;
@@ -33,6 +34,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.room.Room;
 
+import com.example.acade_mic.adapter.SelectedItemsAdapter;
 import com.example.acade_mic.model.Album;
 import com.example.acade_mic.model.AudioRecord;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -87,11 +89,16 @@ public class EditAudioActivity extends AppCompatActivity {
     private float end;
     private MaterialToolbar toolbar;
 
+    private Intent returnIntent;
+
     @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.edit_layout);
+
+        returnIntent = new Intent();
+
         mediaPlayer = new MediaPlayer();
         db = Room.databaseBuilder(
                 getApplicationContext(),
@@ -189,8 +196,6 @@ public class EditAudioActivity extends AppCompatActivity {
         View bottomSheet = findViewById(R.id.bottomSheet);
         TextView textViewTitle = bottomSheet.findViewById(R.id.textViewTitle);
 
-
-
         setSupportActionBar(toolbar);
         ActionBar actionBar = getSupportActionBar();
         if(actionBar != null){
@@ -203,7 +208,6 @@ public class EditAudioActivity extends AppCompatActivity {
                 onBackPressed();
             }
         });
-
 
         rangeSlider.addOnChangeListener(new RangeSlider.OnChangeListener() {
             @Override
@@ -273,7 +277,7 @@ public class EditAudioActivity extends AppCompatActivity {
                 }
                 if(check > 0)
                 {
-                    Toast.makeText(this, "File name already exist", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "File name already exists", Toast.LENGTH_SHORT).show();
                 }
                 else {
                     cutAudioFile(newFileName, fileName, filePath, start, end);
@@ -554,7 +558,11 @@ public class EditAudioActivity extends AppCompatActivity {
 
                     }
                 }).start();
+
                 Toast.makeText(this, "Audio file saved successfully", Toast.LENGTH_SHORT).show();
+
+                setResult(Activity.RESULT_OK, returnIntent);
+                finish();
             }
         } else {
             Toast.makeText(this, "Cut audio file not found", Toast.LENGTH_SHORT).show();
