@@ -452,7 +452,6 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
         selectedAlbum = albumNames.get(position);
     }
     public void rename(){
-
         String newAlbumName = renameAlbInput.getText().toString();
 
         if (!newAlbumName.equals("")) {
@@ -472,11 +471,10 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                mAdapter.notifyDataSetChanged();
+                                mAdapter.resetSelectedItem();
                             }
                         });
                     }
-
                 }).start();
             }
         }
