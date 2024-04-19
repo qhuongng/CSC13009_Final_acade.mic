@@ -533,7 +533,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     intent.putStringArrayListExtra("filenames", filenames);
                     intent.putExtra("albName", albName);
 
-
                     startActivityForResult(intent, 1);
                 } else {
                     // If no audio record is selected, display a message
@@ -568,11 +567,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         }
 
         leaveEditMode();
-    }
-
-    @Override
-    public void onResume(Bundle savedInstanceState){
-        super.onResume();
     }
 
     private void hideKeyBoard(View v){

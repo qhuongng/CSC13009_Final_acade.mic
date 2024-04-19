@@ -89,6 +89,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private ImageButton btnReviewAlarm;
     final Calendar myCalendar = Calendar.getInstance();
     private MaterialButton addBtn;
+    private MaterialButton btnCancel;
     private TextInputEditText startDate;
     private TextView tvFilename;
     private TextView tvTrackProgress;
@@ -117,7 +118,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
     private TextInputEditText addTextNote;
     private MaterialButton btnCancelAddNote;
     private MaterialButton btnSaveNote;
-
 
     private CloudCredentialsProvider credentialsProvider;
     private Spinner spLang;
@@ -316,6 +316,11 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
             }
         });
 
+        btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
+        btnCancel.setOnClickListener((View v) -> {
+            leaveAlarmReview();
+        });
+
         btnReviewAlarm = findViewById(R.id.reviewAlarm);
         btnReviewAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -327,7 +332,7 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
 
                         if (reviewAlarm != null){
                             long time = reviewAlarm.getStartTime();
-                            if (time + 120L*1000L > System.currentTimeMillis()){
+                            if (time + 120L * 1000L > System.currentTimeMillis()){
                                 Instant instant = Instant.ofEpochMilli(time);
                                 LocalDateTime localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
                                 // Lấy giá trị ngày và giờ từ LocalDateTime
@@ -638,11 +643,6 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                     .show();
         }
     };
-
-    @Override
-    public void onResume(Bundle savedInstanceState) {
-
-    }
 
     @Override
     public void onItemClickListener(int position) {

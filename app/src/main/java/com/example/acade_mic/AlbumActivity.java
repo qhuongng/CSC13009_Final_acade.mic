@@ -279,6 +279,7 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
                     actionBar.setDisplayShowHomeEnabled(true);
                 }
                 editbar.setVisibility(View.GONE);
+                mAdapter.resetSelectedItem();
                 editSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
             }
         });
@@ -422,11 +423,6 @@ public class AlbumActivity extends AppCompatActivity implements OnItemClickListe
     public void hideKeyBoard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-    }
-
-    @Override
-    public void onResume(Bundle savedInstanceState) {
-
     }
 
     @Override

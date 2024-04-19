@@ -1,4 +1,4 @@
-package com.example.acade_mic;
+package com.example.acade_mic.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
