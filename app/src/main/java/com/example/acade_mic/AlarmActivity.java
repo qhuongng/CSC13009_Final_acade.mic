@@ -21,6 +21,7 @@ import android.widget.Toast;
 
 import com.example.acade_mic.adapter.AlarmAdapter;
 import com.example.acade_mic.model.Alarm;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
@@ -41,6 +42,7 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
     AlarmAdapter alarmAdapter;
     AppDatabase db;
     Button addBtn;
+    Button btnCancel;
     TextInputEditText startDate;
     TextInputEditText totalDuration;
 
@@ -167,6 +169,11 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
             }).start();
         });
 
+        btnCancel = (MaterialButton) findViewById(R.id.btnCancel);
+        btnCancel.setOnClickListener((View v) -> {
+            finish();
+        });
+
         RecyclerView recyclerView = findViewById(R.id.alarm_recyclerview);
         recyclerView.setAdapter(alarmAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -209,11 +216,6 @@ public class AlarmActivity extends AppCompatActivity implements OnItemClickListe
         String myFormat = "dd/MM/yyyy";
         SimpleDateFormat dateFormat = new SimpleDateFormat(myFormat, Locale.US);
         startDate.setText(dateFormat.format(myCalendar.getTime()));
-    }
-
-    @Override
-    public void onResume(Bundle savedInstanceState) {
-
     }
 
     @Override

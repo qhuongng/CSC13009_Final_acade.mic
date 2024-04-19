@@ -123,14 +123,30 @@
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/addBtn"
-        android:layout_width="140dp"
-        android:layout_height="60dp"
-        android:text="Save"
-        android:backgroundTint="@color/midnightGreen"
-        android:layout_marginTop="20dp"
-        android:textColor="@color/white"
-        app:cornerRadius="26dp"
-        app:rippleColor="@color/darkGray"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancel"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="Cancel"
+            android:backgroundTint="@color/gray"
+            android:textColor="@color/darkGray"
+            app:cornerRadius="26dp"
+            app:rippleColor="@color/darkGray"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/addBtn"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="Save"
+            android:layout_marginStart="20dp"
+            android:backgroundTint="@color/midnightGreen"
+            android:textColor="@color/white"
+            app:cornerRadius="26dp"
+            app:rippleColor="@color/darkGray"/>
+    </LinearLayout>
 </LinearLayout>
