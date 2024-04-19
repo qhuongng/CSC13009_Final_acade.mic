@@ -40,7 +40,7 @@ public class ReviewAlarmService extends Service {
             notiIntent.putExtra("filepath", filePath);
             notiIntent.putExtra("filename", filename);
             notiIntent.putExtra("id", id);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notiIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this,0,notiIntent, PendingIntent.FLAG_IMMUTABLE);
             NotificationCompat.Builder builder = new NotificationCompat.Builder(getBaseContext(), CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_clock)
                     .setContentTitle("Review Alarm")

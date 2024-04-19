@@ -68,7 +68,7 @@
         <activity
             android:name=".GalleryActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
+            android:windowSoftInputMode="adjustPan" />
         <activity
             android:name=".AlbumActivity"
             android:exported="false"
