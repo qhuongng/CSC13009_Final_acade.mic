@@ -73,6 +73,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     private TextView tvShare;
     private TextView tvEditAudio;
     private TextView tvAddToAlb;
+    private boolean checkClickRestore = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,14 +137,18 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }, 50);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
-                    ActionBar actionBar = getSupportActionBar();
-                    if(actionBar != null){
-                        actionBar.setDisplayHomeAsUpEnabled(false);
-                        actionBar.setDisplayShowHomeEnabled(false);
+                if(checkClickRestore != true){
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
+                        ActionBar actionBar = getSupportActionBar();
+                        if(actionBar != null){
+                            actionBar.setDisplayHomeAsUpEnabled(false);
+                            actionBar.setDisplayShowHomeEnabled(false);
+                        }
+                        editbar.setVisibility(View.VISIBLE);
                     }
-                    editbar.setVisibility(View.VISIBLE);
+                } else {
+                    checkClickRestore = false;
                 }
             }
         });
@@ -754,6 +759,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
                     startActivity(intent);
                 } else {
+                    checkClickRestore = true;
                     Toast.makeText(this,"Select album to restore this record file",Toast.LENGTH_SHORT).show();
                     records.get(position).setChecked(true);
                     addToAlbBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
