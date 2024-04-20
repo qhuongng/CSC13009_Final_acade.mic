@@ -293,6 +293,8 @@ public class AudioPlayerActivity extends AppCompatActivity implements OnItemClic
                 } else {
                     Intent intent = new Intent(getBaseContext(),ReviewAlarmService.class);
                     intent.putExtra("filename", fileName);
+                    intent.putExtra("filepath", filePath);
+                    intent.putExtra("id",id);
                     PendingIntent pendingIntent = PendingIntent.getService(getBaseContext(),0,intent,PendingIntent.FLAG_IMMUTABLE);
                     AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                     alarmManager.set(AlarmManager.RTC_WAKEUP, startTimeMillis, pendingIntent);

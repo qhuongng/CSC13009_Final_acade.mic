@@ -285,11 +285,9 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
             return;
         }
-
         if (getExternalFilesDir(null) != null) {
             path = getExternalFilesDir(null).getAbsolutePath() + "/";
         }
-
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss", Locale.ENGLISH);
         String date = sdf.format(new Date());
         fileName = "recording_" + date + ".mp3";
@@ -300,9 +298,7 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         // change the button
         btnRec.setImageResource(R.drawable.ic_pause);
         btnRec.setBackgroundResource(R.drawable.ic_stop_ripple);
-
         btnDel.setClickable(true);
-
         btnRecList.setVisibility(View.GONE);
         btnOk.setVisibility(View.VISIBLE);
     }
