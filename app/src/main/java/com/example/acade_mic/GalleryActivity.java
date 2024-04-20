@@ -81,7 +81,6 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         albName = getIntent().getStringExtra("albumName");
         albumNames = getIntent().getStringArrayListExtra("listAlb");
         albumNames.remove("Delete");
-        albumNames.remove("All Records");
         if (!albName.equals("Delete")) {
             albumNames.remove(albName);
         }
@@ -747,12 +746,26 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 }
 
             } else {
-                Intent intent = new Intent(this, AudioPlayerActivity.class);
-                intent.putExtra("filepath", audioRecord.getFilePath());
-                intent.putExtra("filename", audioRecord.getFilename());
-                intent.putExtra("id", audioRecord.getId());
+                if(!albName.equals("Delete")){
+                    Intent intent = new Intent(this, AudioPlayerActivity.class);
+                    intent.putExtra("filepath", audioRecord.getFilePath());
+                    intent.putExtra("filename", audioRecord.getFilename());
+                    intent.putExtra("id", audioRecord.getId());
 
-                startActivity(intent);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(this,"Select album to restore this record file",Toast.LENGTH_SHORT).show();
+                    records.get(position).setChecked(true);
+                    addToAlbBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
+                    bottomSheetBG.setVisibility(View.VISIBLE);
+                    ActionBar actionBar = getSupportActionBar();
+                    if (actionBar != null) {
+                        actionBar.setDisplayHomeAsUpEnabled(true);
+                        actionBar.setDisplayShowHomeEnabled(true);
+                    }
+                    editbar.setVisibility(View.GONE);
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                }
             }
         }catch(Exception exception){
             System.out.println(exception.fillInStackTrace());
