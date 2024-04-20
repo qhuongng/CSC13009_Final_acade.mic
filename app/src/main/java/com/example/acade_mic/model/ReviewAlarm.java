@@ -2,7 +2,7 @@ package com.example.acade_mic.model;
 
 import androidx.room.Entity;
 
-@Entity(tableName = "reviewAlarm",primaryKeys = "recordId")
+@Entity(tableName = "reviewAlarm", primaryKeys = "recordId")
 public class ReviewAlarm {
     private int recordId;
     private long startTime;
