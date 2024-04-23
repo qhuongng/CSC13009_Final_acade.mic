@@ -1,5 +1,6 @@
 package com.example.acade_mic;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,6 +27,7 @@ import android.os.PersistableBundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -42,12 +45,13 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-public class GalleryActivity extends AppCompatActivity implements OnItemClickListener{
+public class GalleryActivity extends AppCompatActivity implements OnItemClickListener {
     private String albName;
     private ArrayList<AudioRecord> records;
     private Adapter mAdapter;
@@ -134,17 +138,21 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void onClick(View v) {
                 bottomSheetBG.setVisibility(View.GONE);
+
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                 }, 50);
-                if(checkClickRestore != true){
+
+                if (checkClickRestore != true) {
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                    if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
+                    if (mAdapter.isEditMode() && editbar.getVisibility() == View.GONE) {
                         ActionBar actionBar = getSupportActionBar();
-                        if(actionBar != null){
+
+                        if (actionBar != null) {
                             actionBar.setDisplayHomeAsUpEnabled(false);
                             actionBar.setDisplayShowHomeEnabled(false);
                         }
+
                         editbar.setVisibility(View.VISIBLE);
                     }
                 } else {
@@ -160,14 +168,33 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
         mAdapter = new Adapter(records, this);
 
-
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
         recyclerView.setAdapter(mAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        //
         RecyclerView albumView = findViewById(R.id.listAlbumPopup);
         albumView.setLayoutManager(new GridLayoutManager(this, 3));
+
+        bottomSheetBehavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if (newState == BottomSheetBehavior.STATE_EXPANDED) {
+                    ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) recyclerView.getLayoutParams();
+                    layoutParams.bottomMargin = bottomSheet.getHeight();
+                    recyclerView.setLayoutParams(layoutParams);
+                }
+
+                if (newState == BottomSheetBehavior.STATE_COLLAPSED || newState == BottomSheetBehavior.STATE_HIDDEN) {
+                    ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) recyclerView.getLayoutParams();
+                    layoutParams.bottomMargin = 0;
+                    recyclerView.setLayoutParams(layoutParams);
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
+        });
+
         AlbumPopupAdapter adapter = new AlbumPopupAdapter(albumNames, new OnAlbumItemClickListener() {
             @Override
             public void onAlbumItemClick(String album) {
@@ -179,10 +206,12 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 if (albName.equals("Delete")) {
                     // hủy hẹn giờ
                     JobScheduler jobScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+
                     for (AudioRecord ar : ischecked) {
                         jobScheduler.cancel(ar.getId());
                     }
-                    //chuyển về album tổng
+
+                    // chuyển về album tổng
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -190,23 +219,29 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                 records.remove(ar);
                                 db.albumDao().deleteByIdRecord(ar.getId());
                                 db.albumDao().insert(new Album("All Records", ar.getId()));
+
                                 if (!album.equals("All Records")) {
                                     db.albumDao().insert(new Album(album, ar.getId()));
                                 }
                             }
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    recyclerView.getRecycledViewPool().clear();
                                     mAdapter.notifyDataSetChanged();
-                                    Toast.makeText(getBaseContext(), "Restore/Add to Album completed", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getBaseContext(), "Restored record(s) successfully", Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
                     }).start();
+
                     bottomSheetBG.setVisibility(View.GONE);
+
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }, 50);
+
                     leaveEditMode();
                 } else {
                     new Thread(new Runnable() {
@@ -225,22 +260,25 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                                     });
                                 }
                             }
+
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getBaseContext(), "Restore/Add to Album completed", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getBaseContext(), "Added record(s) to album successfully", Toast.LENGTH_SHORT).show();
                                 }
                             });
 
                         }
                     }).start();
+
                     bottomSheetBG.setVisibility(View.GONE);
+
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         addToAlbBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }, 50);
+
                     leaveEditMode();
                 }
-
             }
         });
         albumView.setAdapter(adapter);
@@ -560,6 +598,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             }
         });
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -573,10 +612,11 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         leaveEditMode();
     }
 
-    private void hideKeyBoard(View v){
+    private void hideKeyBoard(View v) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
     }
+
     private void leaveEditMode() {
         ActionBar actionBar = getSupportActionBar();
 
@@ -588,14 +628,13 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         editbar.setVisibility(View.GONE);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        for (AudioRecord rc : records ) {
+        for (AudioRecord rc : records) {
             rc.setChecked(false);
         }
 
         mAdapter.setEditMode(false);
 
     }
-
 
 
     private void disableRename() {
@@ -609,26 +648,31 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-    private void disableShare(){
+
+    private void disableShare() {
         btnShare.setClickable(false);
         btnShare.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-    private void disableEdit(){
+
+    private void disableEdit() {
         btnEditAudio.setClickable(false);
         btnEditAudio.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvEditAudio.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-    private void disableAddToAlbum(){
+
+    private void disableAddToAlbum() {
         btnAddToAlb.setClickable(false);
         btnAddToAlb.setImageTintList(ContextCompat.getColorStateList(this, R.color.disabledDarkGray));
         tvAddToAlb.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.disabledDarkGray, getTheme()));
     }
-    private void enableAddToAlbum(){
+
+    private void enableAddToAlbum() {
         btnAddToAlb.setClickable(true);
         btnAddToAlb.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvAddToAlb.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+
     private void enableRename() {
         btnRename.setClickable(true);
         btnRename.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
@@ -640,11 +684,13 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         btnDelete.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvDelete.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+
     private void enableShare() {
         btnShare.setClickable(true);
         btnShare.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
         tvShare.setTextColor(ResourcesCompat.getColorStateList(getResources(), R.color.darkGray, getTheme()));
     }
+
     private void enableEdit() {
         btnEditAudio.setClickable(true);
         btnEditAudio.setImageTintList(ContextCompat.getColorStateList(this, R.color.darkGray));
@@ -656,7 +702,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
             @Override
             public void run() {
                 records.clear();
-                List<AudioRecord> queryResult = db.audioRecordDao().searchDatabase(String.format("%%%s%%",query));
+                List<AudioRecord> queryResult = db.audioRecordDao().searchDatabase(String.format("%%%s%%", query));
                 records.addAll(queryResult);
 
 
@@ -672,7 +718,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
     }
 
     private void fetchAll() {
-        if(db == null) db = AppDatabase.getInstance(this);
+        if (db == null) db = AppDatabase.getInstance(this);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -681,10 +727,9 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 records.clear();
 
                 if (listRecID != null) {
-                    for (int id: listRecID)
-                    {
+                    for (int id : listRecID) {
                         AudioRecord temp = db.audioRecordDao().getRecbyID(id);
-                        if(temp != null) records.add(temp);
+                        if (temp != null) records.add(temp);
                     }
 
 //                List<AudioRecord> queryResult = db.audioRecordDao().getAll();
@@ -703,10 +748,10 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
 
     @Override
     public void onItemClickListener(int position) {
-        try{
+        try {
             AudioRecord audioRecord = records.get(position);
 
-            if(mAdapter.isEditMode()){
+            if (mAdapter.isEditMode()) {
                 records.get(position).setChecked(!records.get(position).isChecked());
                 mAdapter.notifyItemChanged(position);
 
@@ -728,7 +773,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     case 1:
                         enableDelete();
                         enableAddToAlbum();
-                        if(albName.equals("Delete")){
+                        if (albName.equals("Delete")) {
                             disableShare();
                             disableEdit();
                             disableRename();
@@ -743,7 +788,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                         disableRename();
                         enableDelete();
                         disableShare();
-                        if(albName.equals("Delete")){
+                        if (albName.equals("Delete")) {
                             disableEdit();
                         } else {
                             enableEdit();
@@ -751,7 +796,7 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                 }
 
             } else {
-                if(!albName.equals("Delete")){
+                if (!albName.equals("Delete")) {
                     Intent intent = new Intent(this, AudioPlayerActivity.class);
                     intent.putExtra("filepath", audioRecord.getFilePath());
                     intent.putExtra("filename", audioRecord.getFilename());
@@ -760,20 +805,21 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
                     startActivity(intent);
                 } else {
                     checkClickRestore = true;
-                    Toast.makeText(this,"Select album to restore this record file",Toast.LENGTH_SHORT).show();
                     records.get(position).setChecked(true);
                     addToAlbBehavior.setState(BottomSheetBehavior.STATE_HALF_EXPANDED);
                     bottomSheetBG.setVisibility(View.VISIBLE);
                     ActionBar actionBar = getSupportActionBar();
+
                     if (actionBar != null) {
                         actionBar.setDisplayHomeAsUpEnabled(true);
                         actionBar.setDisplayShowHomeEnabled(true);
                     }
+
                     editbar.setVisibility(View.GONE);
                     bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
                 }
             }
-        }catch(Exception exception){
+        } catch (Exception exception) {
             System.out.println(exception.fillInStackTrace());
         }
     }
@@ -785,16 +831,16 @@ public class GalleryActivity extends AppCompatActivity implements OnItemClickLis
         mAdapter.notifyItemChanged(position);
 
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-        if(mAdapter.isEditMode() && editbar.getVisibility() == View.GONE){
+        if (mAdapter.isEditMode() && editbar.getVisibility() == View.GONE) {
             ActionBar actionBar = getSupportActionBar();
-            if(actionBar != null){
+            if (actionBar != null) {
                 actionBar.setDisplayHomeAsUpEnabled(false);
                 actionBar.setDisplayShowHomeEnabled(false);
             }
             editbar.setVisibility(View.VISIBLE);
             enableDelete();
             enableAddToAlbum();
-            if(albName.equals("Delete")){
+            if (albName.equals("Delete")) {
                 disableShare();
                 disableEdit();
                 disableRename();
