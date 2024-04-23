@@ -64,7 +64,9 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
-                    android:padding="8dp"
+                    android:paddingStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:paddingEnd="40dp"
                     android:singleLine="true"
                     android:ellipsize="end"
                     android:spinnerMode="dropdown"/>
