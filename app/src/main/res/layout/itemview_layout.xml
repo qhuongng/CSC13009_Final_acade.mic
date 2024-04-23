@@ -23,10 +23,10 @@
 
     <LinearLayout
         android:id="@+id/fileGroup"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="40dp"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@id/playBtn">
 
