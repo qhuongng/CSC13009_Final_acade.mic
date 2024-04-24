@@ -43,12 +43,23 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements Timer.OnTimerTickListener, ServiceConnection {
     public final int REQUEST_CODE = 200;
-    public final int REQUEST_CODE2 = 201;
-    public final int REQUEST_CODE3 = 202;
+
+    String[] permissions = {
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.VIBRATE,
+            Manifest.permission.READ_MEDIA_AUDIO,
+            Manifest.permission.READ_MEDIA_VIDEO,
+            Manifest.permission.READ_MEDIA_IMAGES,
+            Manifest.permission.FOREGROUND_SERVICE_MICROPHONE,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING
+    };
 
     public static boolean permissionGranted;
-    public static boolean permissionGranted2;
-    public static boolean permissionGranted3;
 
     public ImageButton btnRec;
     public ImageButton btnDel;
@@ -96,8 +107,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
             db.close();
         }
 
-        Toast.makeText(this, "destroyed", Toast.LENGTH_SHORT).show();
-
         super.onDestroy();
     }
 
@@ -106,21 +115,21 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         super.onCreate(savedInstanceState);
         records = new ArrayList<AudioRecord>();
         setContentView(R.layout.activity_main);
-        permissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-        permissionGranted2 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED;
-        permissionGranted3 = ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE_MICROPHONE) == PackageManager.PERMISSION_GRANTED;
 
-        if (!permissionGranted) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_CODE);
+        List<String> permissionList = new ArrayList<>();
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionList.add(permission);
+            }
         }
 
-        if (!permissionGranted2) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE}, REQUEST_CODE2);
+        if (!permissionList.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionList.toArray(new String[0]), REQUEST_CODE);
+        }
+        else {
+            permissionGranted = true;
         }
 
-        if (!permissionGranted3) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.FOREGROUND_SERVICE_MICROPHONE}, REQUEST_CODE3);
-        }
         db = AppDatabase.getInstance(this);
         timer = new Timer(this);
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
@@ -212,7 +221,6 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         });
     }
 
-
     public void save() {
         String newFileName = fileNameInput.getText().toString();
 
@@ -276,7 +284,20 @@ public class MainActivity extends AppCompatActivity implements Timer.OnTimerTick
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == REQUEST_CODE) {
-            permissionGranted = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            boolean allPermissionsGranted = true;
+
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
+                    break;
+                }
+            }
+
+            if (allPermissionsGranted) {
+                permissionGranted = true;
+            } else {
+                permissionGranted = false;
+            }
         }
     }
 
