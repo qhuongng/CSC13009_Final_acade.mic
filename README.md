@@ -33,8 +33,13 @@ The demo video for this application is available on [YouTube](https://www.youtub
 Since this is an Android Studio project, **[Android Studio](https://developer.android.com/studio?gad_source=1&gclid=Cj0KCQjwudexBhDKARIsAI-GWYVkfoOgTgBlEUi8YbHlayDhIk-Zw9kr72HzRuuthkrB-5S5NyO127saAlwPEALw_wcB&gclsrc=aw.ds)** is required to build and run the source code in this repository. A Google Cloud project with properly configured APIs and credentials is required to test the features related to audio transcription.
 
 1. Create a [Google Cloud project](https://developers.google.com/workspace/guides/create-project).
+   
 2. In your project dashboard, select **APIs & Services** from the fly-out hamburger menu on the left and enable three APIs: **Cloud Speech-to-Text API**, **Cloud Translation API** and **Generative Language API**.
+   
 3. In the **APIs & Services** screen, select **Credentials** and generate an API key. Put this API key into the `cloud_api_key` item in the **strings.xml** file, which is located in this project's **res/values** folder.
+   
 4. Select **IAM & Admin > Service Accounts** from the fly-out hamburger menu on the left. Open the **Actions** menu of the service account linked to your Google Cloud project and choose **Manage keys**.
+   
 5. In the **Keys** screen, select **Add key > Create new key**. Select the JSON key option and click **Create**. Rename the downloaded file to **credential.json** and replace the original file in the **res/raw** folder with your file.
+   
 6. Build and run the project on an emulator or on your physical Android device.
